@@ -132,6 +132,7 @@
 					interrupts = <2 4>;
 					#gpio-cells = <2>;
 					gpio-controller;
+					gpio-nb = <19>;
 					interrupt-controller;
 				};
 
@@ -150,6 +151,7 @@
 					interrupts = <3 4>;
 					#gpio-cells = <2>;
 					gpio-controller;
+					gpio-nb = <22>;
 					interrupt-controller;
 				};
 			};
