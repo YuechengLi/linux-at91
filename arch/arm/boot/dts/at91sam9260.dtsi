@@ -92,6 +92,28 @@
 				interrupts = <17 4 0 18 4 0 19 4 0>;
 			};
 
+			spi0: spi@fffc8000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xfffc8000 0x4000>;
+				interrupts = <12 4 5>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi0>;
+				status = "disabled";
+			};
+
+			spi1: spi@fffcc000 {
+				compatible = "atmel,at91rm9200-spi";
+				reg = <0xfffcc000 0x4000>;
+				interrupts = <13 4 5>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_spi1>;
+				status = "disabled";
+			};
+
 			tcb1: timer@fffdc000 {
 				compatible = "atmel,at91rm9200-tcb";
 				reg = <0xfffdc000 0x100>;
@@ -302,6 +324,24 @@
 							<0 5 0x2 0x1	/* PA5 periph B with pullup */
 							 0 4 0x2 0x1	/* PA4 periph B with pullup */
 							 0 3 0x2 0x1>;	/* PA3 periph B with pullup */
+					};
+				};
+
+				spi0 {
+					pinctrl_spi0: spi0-0 {
+						atmel,pins =
+							<0 0 0x1 0x0	/* PA0 periph A */
+							 0 1 0x1 0x0	/* PA1 periph A */
+							 0 2 0x1 0x0>;	/* PA2 periph A */
+					};
+				};
+
+				spi1 {
+					pinctrl_spi1: spi1-0 {
+						atmel,pins =
+							<1 0 0x1 0x0	/* PB0 periph A */
+							 1 1 0x1 0x0	/* PB1 periph A */
+							 1 2 0x1 0x0>;	/* PB2 periph A */
 					};
 				};
 
