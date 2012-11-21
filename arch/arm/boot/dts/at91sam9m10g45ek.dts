@@ -102,6 +102,39 @@
 					};
 				};
 			};
+
+			spi0: spi@fffa4000 {
+				cs-gpios = <&pioB 3 0>;
+				status = "okay";
+
+				flash: at45db321d@0 {
+					#address-cells = <1>;
+					#size-cells = <0>;
+					compatible = "atmel,at45db321d", "atmel,at45", "atmel,dataflash";
+					reg = <0>;
+					spi-max-frequency = <15000000>;
+
+					bootstrap@0 {
+						label = "bootstrap";
+						reg = <0x0 0x7fe0>;
+					};
+
+					barebox@7fe0 {
+						label = "barebox";
+						reg = <0x7fe0 0x40110>;
+					};
+
+					bareboxenv@480f0 {
+						label = "bareboxenv";
+						reg = <0x480f0 0x7fe0>;
+					};
+
+					kernel@500d0 {
+						label = "Kernel";
+						reg = <0x500d0 0x3cff30>;
+					};
+				};
+			};
 		};
 
 		nand0: nand@40000000 {
