@@ -37,6 +37,14 @@ config PWM_AB8500
 	  To compile this driver as a module, choose M here: the module
 	  will be called pwm-ab8500.
 
+config PWM_ATMEL_TCB
+	bool "TC Block PWM"
+	depends on ATMEL_TCLIB
+	select HAVE_PWM
+	default y
+	help
+	  Select this to get 6 PWM devices.
+
 config PWM_BFIN
 	tristate "Blackfin PWM support"
 	depends on BFIN_GPTIMERS
