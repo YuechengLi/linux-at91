@@ -28,6 +28,8 @@
 #include <linux/ioctl.h>
 #include <linux/completion.h>
 #include <linux/io.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
 #include <asm/uaccess.h>
 
@@ -381,12 +383,19 @@ static const struct dev_pm_ops at91_rtc_pm = {
 #define at91_rtc_pm_ptr	NULL
 #endif
 
+static const struct of_device_id at91_rtc_dt_ids[] = {
+	{ .compatible = "atmel,at91rm9200-rtc" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, at91_rtc_dt_ids);
+
 static struct platform_driver at91_rtc_driver = {
 	.remove		= __exit_p(at91_rtc_remove),
 	.driver		= {
 		.name	= "at91_rtc",
 		.owner	= THIS_MODULE,
 		.pm	= at91_rtc_pm_ptr,
+		.of_match_table = of_match_ptr(at91_rtc_dt_ids),
 	},
 };
 
