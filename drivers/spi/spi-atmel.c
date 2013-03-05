@@ -846,9 +846,9 @@ static int atmel_spi_transfer(struct spi_device *spi, struct spi_message *msg)
 			}
 		}
 
-		/* FIXME implement these protocol options!! */
-		if (xfer->speed_hz) {
-			dev_dbg(&spi->dev, "no protocol options yet\n");
+		if (xfer->speed_hz < spi->max_speed_hz) {
+			dev_dbg(&spi->dev,
+				"speed in transfer less than bus speed\n");
 			return -ENOPROTOOPT;
 		}
 
