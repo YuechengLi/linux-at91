@@ -1018,6 +1018,8 @@ config FB_ATMEL
 	select FB_CFB_FILLRECT
 	select FB_CFB_COPYAREA
 	select FB_CFB_IMAGEBLIT
+	select FB_MODE_HELPERS
+	select OF_VIDEOMODE
 	help
 	  This enables support for the AT91/AT32 LCD Controller.
 
