@@ -46,6 +46,8 @@
 #define PCF8563_SC_LV		0x80 /* low voltage */
 #define PCF8563_MO_C		0x80 /* century */
 
+#define PCF8563_STOPPED		0x20 /* stopped */
+
 static struct i2c_driver pcf8563_driver;
 
 struct pcf8563 {
@@ -189,15 +191,37 @@ static int pcf8563_set_datetime(struct i2c_client *client, struct rtc_time *tm)
 #ifdef CONFIG_RTC_INTF_DEV
 static int pcf8563_rtc_ioctl(struct device *dev, unsigned int cmd, unsigned long arg)
 {
-	struct pcf8563 *pcf8563 = i2c_get_clientdata(to_i2c_client(dev));
+	struct i2c_client *client = to_i2c_client(dev);
+	struct pcf8563 *pcf8563 = i2c_get_clientdata(client);
 	struct rtc_time tm;
+	int vl = 0;
+	unsigned char buf[3] = { PCF8563_REG_ST1 };
+	struct i2c_msg msgs[] = {
+		{/* setup read ptr */
+			.addr = client->addr,
+			.len = 1,
+			.buf = buf
+		},
+		{/* read status + date */
+			.addr = client->addr,
+			.flags = I2C_M_RD,
+			.len = 3,
+			.buf = buf
+		},
+	};
 
 	switch (cmd) {
 	case RTC_VL_READ:
-		if (pcf8563->voltage_low)
-			dev_info(dev, "low voltage detected, date/time is not reliable.\n");
+		if ((i2c_transfer(client->adapter, msgs, 2)) != 2) {
+			dev_err(&client->dev, "%s: read error\n", __func__);
+			return -EIO;
+		}
 
-		if (copy_to_user((void __user *)arg, &pcf8563->voltage_low,
+		if ((buf[PCF8563_REG_SC] & PCF8563_SC_LV) |
+		    (buf[PCF8563_REG_ST1] & PCF8563_STOPPED))
+			vl = 1;
+
+		if (copy_to_user((void __user *)arg, &vl,
 					sizeof(int)))
 			return -EFAULT;
 		return 0;
