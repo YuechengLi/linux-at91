@@ -66,6 +66,13 @@
 							<AT91_PIOA 7 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH>;	/* PA7 gpio CD pin pull up and deglitch */
 					};
 				};
+
+				eth0 {
+					pinctrl_board_eth0: eth0-board {
+						atmel,pins =
+							<AT91_PIOD 19 AT91_PERIPH_B AT91_PINCTRL_NONE>;
+					};
+				};
 			};
 
 			spi0: spi@f0000000 {
@@ -77,6 +84,17 @@
 					reg = <0>;
 				};
 			};
+		};
+
+		eth0: ethernet@30000000 {
+			compatible = "micrel,ks8851-mll";
+			reg = <0x30000000 0x1
+			       0x30000002 0xff>;
+			interrupt-parent = <&pioD>;
+			interrupts = <21 IRQ_TYPE_EDGE_BOTH>;
+			pinctrl-names = "default";
+			pinctrl-0 = <&pinctrl_board_eth0>;
+			status = "okay";
 		};
 
 		nand0: nand@40000000 {
