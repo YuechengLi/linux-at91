@@ -1425,12 +1425,19 @@ static int at91_gpio_irq_domain_xlate(struct irq_domain *d,
 {
 	struct at91_gpio_chip *at91_gpio = d->host_data;
 	int ret;
+	const char *label;
 	int pin = at91_gpio->chip.base + intspec[0];
 
 	if (WARN_ON(intsize < 2))
 		return -EINVAL;
 	*out_hwirq = intspec[0];
 	*out_type = intspec[1] & IRQ_TYPE_SENSE_MASK;
+
+	/* xlate may be called more than once for the same pin of the same
+	 * deivce, for counting so request only one */
+	label = gpiochip_is_requested(&at91_gpio->chip, intspec[0]);
+	if (label && !strcmp(label, ctrlr->full_name))
+		return 0;
 
 	ret = gpio_request(pin, ctrlr->full_name);
 	if (ret)
