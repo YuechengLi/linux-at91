@@ -674,7 +674,7 @@ unsigned int irq_create_of_mapping(struct device_node *controller,
 #endif
 		pr_warning("no irq domain found for %s !\n",
 			   of_node_full_name(controller));
-		return 0;
+		return -EPROBE_DEFER;
 	}
 
 	/* If domain has no translation, then we assume interrupt line */
