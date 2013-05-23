@@ -131,6 +131,32 @@ void of_device_make_bus_id(struct device *dev)
 }
 
 /**
+ * of_device_alloc_irq - initialize irq of an platfrom_device
+ * @dev: plaform_device to work on
+ */
+int of_device_init_irq(struct platform_device *dev)
+{
+	struct device_node *np = dev->dev.of_node;
+	int num_irq;
+	int ret;
+	struct resource *res = dev->resource;
+
+	if (!np)
+		return 0;
+
+	num_irq = of_irq_count(np);
+	if (!num_irq)
+		return 0;
+
+	res += dev->num_resources - num_irq;
+	ret = of_irq_to_resource_table(np, res, num_irq);
+	if (ret != num_irq)
+		return -EPROBE_DEFER;
+
+	return 0;
+}
+
+/**
  * of_device_alloc - Allocate and initialize an of_device
  * @np: device node to assign to device
  * @bus_id: Name to assign to the device.  May be null to use default name.
@@ -168,7 +194,6 @@ struct platform_device *of_device_alloc(struct device_node *np,
 			rc = of_address_to_resource(np, i, res);
 			WARN_ON(rc);
 		}
-		WARN_ON(of_irq_to_resource_table(np, res, num_irq) != num_irq);
 	}
 
 	dev->dev.of_node = of_node_get(np);

@@ -79,6 +79,7 @@ extern const struct of_device_id of_default_bus_match_table[];
 extern struct platform_device *of_device_alloc(struct device_node *np,
 					 const char *bus_id,
 					 struct device *parent);
+extern int of_device_init_irq(struct platform_device *dev);
 extern struct platform_device *of_find_device_by_node(struct device_node *np);
 
 #ifdef CONFIG_OF_ADDRESS /* device reg helpers depend on OF_ADDRESS */
@@ -101,12 +102,18 @@ extern int of_platform_populate(struct device_node *root,
 #if !defined(CONFIG_OF_ADDRESS)
 struct of_dev_auxdata;
 struct device;
+struct platform_device;
 static inline int of_platform_populate(struct device_node *root,
 					const struct of_device_id *matches,
 					const struct of_dev_auxdata *lookup,
 					struct device *parent)
 {
 	return -ENODEV;
+}
+
+static inline int of_device_init_irq(struct platform_device *dev)
+{
+	return 0;
 }
 #endif /* !CONFIG_OF_ADDRESS */
 
