@@ -382,7 +382,7 @@ int __init icu_of_init(struct device_node *node, struct device_node *parent)
 	eiu_node = of_find_compatible_node(NULL, NULL, "lantiq,eiu-xway");
 	if (eiu_node && !of_address_to_resource(eiu_node, 0, &res)) {
 		/* find out how many external irq sources we have */
-		exin_avail = of_irq_count(eiu_node);
+		exin_avail = of_irq_valid_count(eiu_node);
 
 		if (exin_avail > MAX_EIU)
 			exin_avail = MAX_EIU;

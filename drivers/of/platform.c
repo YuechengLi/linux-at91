@@ -152,7 +152,7 @@ struct platform_device *of_device_alloc(struct device_node *np,
 	if (of_can_translate_address(np))
 		while (of_address_to_resource(np, num_reg, &temp_res) == 0)
 			num_reg++;
-	num_irq = of_irq_count(np);
+	num_irq = of_irq_valid_count(np);
 
 	/* Populate the resource table */
 	if (num_irq || num_reg) {

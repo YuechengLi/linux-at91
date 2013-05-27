@@ -243,7 +243,7 @@ static int ppc4xx_msi_probe(struct platform_device *dev)
 		goto error_out;
 	}
 
-	msi_irqs = of_irq_count(dev->dev.of_node);
+	msi_irqs = of_irq_valid_count(dev->dev.of_node);
 	if (!msi_irqs)
 		return -ENODEV;
 

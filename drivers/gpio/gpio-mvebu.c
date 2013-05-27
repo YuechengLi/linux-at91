@@ -663,7 +663,7 @@ static int mvebu_gpio_probe(struct platform_device *pdev)
 	gpiochip_add(&mvchip->chip);
 
 	/* Some gpio controllers do not provide irq support */
-	if (!of_irq_count(np))
+	if (!of_irq_valid_count(np))
 		return 0;
 
 	/* Setup the interrupt handlers. Each chip can have up to 4

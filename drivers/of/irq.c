@@ -362,10 +362,10 @@ int of_irq_to_resource(struct device_node *dev, int index, struct resource *r)
 EXPORT_SYMBOL_GPL(of_irq_to_resource);
 
 /**
- * of_irq_count - Count the number of IRQs a node uses
+ * of_irq_valid_count - Count the number of mapped IRQs a node uses
  * @dev: pointer to device tree node
  */
-int of_irq_count(struct device_node *dev)
+int of_irq_valid_count(struct device_node *dev)
 {
 	int nr = 0;
 
