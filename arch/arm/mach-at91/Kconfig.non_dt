@@ -93,11 +93,6 @@ config MACH_PICOTUX2XX
 	  Select this if you are using a picotux 200.
 	  <http://www.picotux.com/>
 
-config MACH_KAFA
-	bool "Sperry-Sun KAFA board"
-	help
-	  Select this if you are using Sperry-Sun's KAFA board.
-
 config MACH_ECBAT91
 	bool "emQbit ECB_AT91 SBC"
 	select HAVE_AT91_DATAFLASH_CARD

@@ -38,7 +38,6 @@ obj-$(CONFIG_MACH_CSB337)	+= board-csb337.o
 obj-$(CONFIG_MACH_CSB637)	+= board-csb637.o
 obj-$(CONFIG_MACH_KB9200)	+= board-kb9202.o
 obj-$(CONFIG_MACH_ATEB9200)	+= board-eb9200.o
-obj-$(CONFIG_MACH_KAFA)		+= board-kafa.o
 obj-$(CONFIG_MACH_PICOTUX2XX)	+= board-picotux200.o
 obj-$(CONFIG_MACH_ECBAT91)	+= board-ecbat91.o
 obj-$(CONFIG_MACH_YL9200)	+= board-yl-9200.o
