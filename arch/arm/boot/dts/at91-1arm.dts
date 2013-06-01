@@ -1,0 +1,70 @@
+/*
+ * at91-1arm.dts - Device Tree file for Ajeco 1ARM single board computer
+ *
+ * Copyright (C) 2013 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91rm9200_pqfp.dtsi"
+
+/ {
+	model = "Ajeco 1ARM single board computer";
+	compatible = "ajeco,1arm", "atmel,at91rm9200-pqfp", "atmel,at91rm9200";
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		main_clock: clock@0 {
+			compatible = "atmel,osc", "fixed-clock";
+			clock-frequency = <18432000>;
+		};
+	};
+
+	ahb {
+		apb {
+			dbgu: serial@fffff200 {
+				status = "okay";
+			};
+
+			usart0: serial@fffc0000 {
+				pinctrl-0 =
+						<&pinctrl_uart0
+						 &pinctrl_uart0_rts
+						 &pinctrl_uart0_cts>;
+
+				status = "okay";
+			};
+
+			usart1: serial@fffc4000 {
+				pinctrl-0 =
+						<&pinctrl_uart1
+						 &pinctrl_uart1_rts
+						 &pinctrl_uart1_cts
+						 &pinctrl_uart1_dtr_dsr
+						 &pinctrl_uart1_dcd
+						 &pinctrl_uart1_ri>;
+				status = "okay";
+			};
+
+			macb0: ethernet@fffbc000 {
+				phy-mode = "rmii";
+				/* phy irq PC4 */
+				status = "okay";
+			};
+
+			usb1: gadget@fffb0000 {
+				atmel,vbus-gpio = <&pioC 2 0>;
+				atmel,pullup-gpio = <&pioC 3 0>;
+				status = "okay";
+			};
+		};
+
+		usb0: ohci@00300000 {
+			num-ports = <1>;
+			status = "okay";
+		};
+	};
+};
