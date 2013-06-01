@@ -1,0 +1,144 @@
+/*
+ * at91-flexibity.dts - Device Tree file for Flexibity Connect board
+ *
+ * Copyright (C) 2013 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91sam9260.dtsi"
+
+/ {
+	model = "Flexibity Connect board";
+	compatible = "flexibity,connect", "atmel,at91sam9260", "atmel,at91sam9";
+
+	memory {
+		reg = <0x20000000 0x4000000>;
+	};
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		main_clock: clock@0 {
+			compatible = "atmel,osc", "fixed-clock";
+			clock-frequency = <18432000>;
+		};
+	};
+
+	ahb {
+		apb {
+			dbgu: serial@fffff200 {
+				status = "okay";
+			};
+
+			usb1: gadget@fffa4000 {
+				atmel,vbus-gpio = <&pioC 5 GPIO_ACTIVE_HIGH>;
+				status = "okay";
+			};
+
+			mmc0: mmc@fffa8000 {
+				pinctrl-0 = <
+					&pinctrl_board_mmc0
+					&pinctrl_mmc0_clk
+					&pinctrl_mmc0_slot0_cmd_dat0
+					&pinctrl_mmc0_slot0_dat1_3>;
+				status = "okay";
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioB 9 GPIO_ACTIVE_HIGH>;
+					wp-gpios = <&pioC 4 GPIO_ACTIVE_HIGH>;
+				};
+			};
+
+			pinctrl@fffff400 {
+				mmc0 {
+					pinctrl_board_mmc0: mmc0-board {
+						atmel,pins =
+							<AT91_PIOB 9 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH
+							 AT91_PIOC 4 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+			};
+
+			spi0: spi@fffc8000 {
+				status = "okay";
+				cs-gpios = <0>,
+					   <&pioC 11 GPIO_ACTIVE_HIGH>;
+				mtd_dataflash@1 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <15000000>;
+					reg = <1>;
+				};
+			};
+		};
+
+		usb0: ohci@00500000 {
+			num-ports = <2>;
+			status = "okay";
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		usb1_green {
+			label = "usb1:green";
+			gpios = <&pioA 12 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb1_red {
+			label = "usb1:red";
+			gpios = <&pioA 13 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb2_green {
+			label = "usb2:green";
+			gpios = <&pioB 16 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb2_red {
+			label = "usb2:red";
+			gpios = <&pioB 27 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb3_green {
+			label = "usb3:green";
+			gpios = <&pioC 8 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb3_red {
+			label = "usb3:red";
+			gpios = <&pioC 6 13 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb4_green {
+			label = "usb4:green";
+			gpios = <&pioB 4 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+
+		usb4_red {
+			label = "usb4:red";
+			gpios = <&pioB 5 GPIO_ACTIVE_LOW>;
+			default-state = "on";
+		};
+	};
+
+	i2c@0 {
+		status = "okay";
+
+		rtc@68 {
+			compatible = "dallas,ds1307";
+			reg = <0x68>;
+		};
+	};
+};
