@@ -37,7 +37,6 @@ obj-$(CONFIG_ARCH_AT91RM9200DK)	+= board-rm9200dk.o
 obj-$(CONFIG_MACH_AT91RM9200EK)	+= board-rm9200ek.o
 obj-$(CONFIG_MACH_CSB337)	+= board-csb337.o
 obj-$(CONFIG_MACH_CSB637)	+= board-csb637.o
-obj-$(CONFIG_MACH_CARMEVA)	+= board-carmeva.o
 obj-$(CONFIG_MACH_KB9200)	+= board-kb9202.o
 obj-$(CONFIG_MACH_ATEB9200)	+= board-eb9200.o
 obj-$(CONFIG_MACH_KAFA)		+= board-kafa.o

@@ -4,6 +4,7 @@ ifeq ($(CONFIG_OF),y)
 # rm9200
 dtb-$(CONFIG_ARCH_AT91) += at91rm9200ek.dtb
 dtb-$(CONFIG_ARCH_AT91) += at91-1arm.dtb
+dtb-$(CONFIG_ARCH_AT91) += at91-carmeva.dtb
 dtb-$(CONFIG_ARCH_AT91) += mpa1600.dtb
 # sam9260
 dtb-$(CONFIG_ARCH_AT91) += animeo_ip.dtb
