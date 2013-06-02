@@ -75,12 +75,6 @@ config MACH_CSB637
 	  Select this if you are using Cogent's CSB637 board.
 	  <http://www.cogcomp.com/csb_csb637.htm>
 
-config MACH_CARMEVA
-	bool "Conitec ARM&EVA"
-	help
-	  Select this if you are using Conitec's AT91RM9200-MCU-Module.
-	  <http://www.conitec.net/english/linuxboard.php>
-
 config MACH_ATEB9200
 	bool "Embest ATEB9200"
 	help
