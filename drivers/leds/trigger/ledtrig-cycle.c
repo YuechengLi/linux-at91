@@ -25,6 +25,7 @@
 #define timer_to_cycle(timer) \
 	container_of(timer, struct cycle_trig_data, timer)
 
+#define DEFAULT_COUNT 0
 #define DELIMITER 0x0a
 
 struct cycle_trig_data {
@@ -35,27 +36,185 @@ struct cycle_trig_data {
 	unsigned int plot_index;
 	size_t plot_count;
 	u8 *plot;
+	unsigned int cycle_count;
+	unsigned int cycle_repeat;
 };
+
+static int cycle_start(struct cycle_trig_data *data)
+{
+	unsigned long flags;
+
+	if (hrtimer_active(&data->timer))
+		return -EINVAL;
+
+	spin_lock_irqsave(&data->lock, flags);
+	data->plot_index = 0;
+	data->cycle_count = 0;
+	hrtimer_start(&data->timer, ktime_get(), HRTIMER_MODE_ABS);
+	spin_unlock_irqrestore(&data->lock, flags);
+
+	return 1;
+}
+
+static int cycle_stop(struct cycle_trig_data *data)
+{
+	unsigned long flags;
+
+	if (!hrtimer_active(&data->timer))
+		return -EINVAL;
+
+	spin_lock_irqsave(&data->lock, flags);
+	data->plot_index = 0;
+	data->cycle_count = 0;
+	hrtimer_cancel(&data->timer);
+	spin_unlock_irqrestore(&data->lock, flags);
+
+	return 1;
+}
+
+static int cycle_reset(struct cycle_trig_data *data)
+{
+	data->plot_index = 0;
+	data->cycle_count = 0;
+
+	return 1;
+}
+
+static int cycle_pause(struct cycle_trig_data *data)
+{
+	unsigned long flags;
+
+	if (!hrtimer_active(&data->timer))
+		return -EINVAL;
+
+	spin_lock_irqsave(&data->lock, flags);
+	hrtimer_cancel(&data->timer);
+	spin_unlock_irqrestore(&data->lock, flags);
+
+	return 1;
+}
+
+static int cycle_resume(struct cycle_trig_data *data)
+{
+	unsigned long flags;
+
+	if (hrtimer_active(&data->timer))
+		return -EINVAL;
+
+	spin_lock_irqsave(&data->lock, flags);
+	hrtimer_start(&data->timer, ktime_get(), HRTIMER_MODE_ABS);
+	spin_unlock_irqrestore(&data->lock, flags);
+
+	return 1;
+}
 
 static enum hrtimer_restart led_cycle_function(struct hrtimer *timer)
 {
 	struct cycle_trig_data *data = timer_to_cycle(timer);
 	struct led_classdev *cdev = data->cdev;
+	enum hrtimer_restart ret = HRTIMER_RESTART;
 	unsigned long flags;
 
 	spin_lock_irqsave(&data->lock, flags);
 	if (data->plot) {
 		led_set_brightness(cdev, data->plot[data->plot_index]);
 		data->plot_index++;
-		if (data->plot_index >= data->plot_count)
+		if (data->plot_index >= data->plot_count) {
 			data->plot_index = 0;
+			if (data->cycle_repeat)
+				if (data->cycle_count < data->cycle_repeat)
+					data->cycle_count++;
+				else {
+					data->cycle_count = 0;
+					ret = HRTIMER_NORESTART;
+				}
+		}
 	}
 	spin_unlock_irqrestore(&data->lock, flags);
 
-	hrtimer_add_expires(timer, data->interval);
+	if (ret == HRTIMER_RESTART) {
+		hrtimer_add_expires(timer, data->interval);
+	}
 
-	return HRTIMER_RESTART;
+	return ret;
 }
+
+static ssize_t cycle_status_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct cycle_trig_data *data = led_cdev->trigger_data;
+
+	return snprintf(buf, PAGE_SIZE, "%sactive\n",
+			hrtimer_active(&data->timer) ? "" : "in");
+}
+
+static DEVICE_ATTR(status, 0444, cycle_status_show, NULL);
+
+static ssize_t cycle_control_store(struct device *dev,
+				    struct device_attribute *attr,
+				    const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct cycle_trig_data *data = led_cdev->trigger_data;
+
+	if (strncmp(buf, "start", sizeof("start") - 1) == 0)
+		cycle_start(data);
+	else if (strncmp(buf, "stop", sizeof("stop") - 1) == 0)
+		cycle_stop(data);
+	else if (strncmp(buf, "reset", sizeof("reset") - 1) == 0)
+		cycle_reset(data);
+	else if (strncmp(buf, "pause", sizeof("stop") - 1) == 0)
+		cycle_pause(data);
+	else if (strncmp(buf, "resume", sizeof("resume") - 1) == 0)
+		cycle_resume(data);
+	else
+		return -EINVAL;
+
+	return size;
+}
+
+static DEVICE_ATTR(control, 0200, NULL, cycle_control_store);
+
+static ssize_t cycle_repeat_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct cycle_trig_data *data = led_cdev->trigger_data;
+
+	return snprintf(buf, PAGE_SIZE, "%u\n", data->cycle_repeat);
+}
+
+static ssize_t cycle_repeat_store(struct device *dev,
+				 struct device_attribute *attr,
+				 const char *buf, size_t size)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct cycle_trig_data *data = led_cdev->trigger_data;
+	unsigned long count;
+	int err;
+
+	err = kstrtoul(buf, 0, &count);
+	if (err)
+		return -EINVAL;
+
+	data->cycle_repeat = count;
+
+	return size;
+}
+
+static DEVICE_ATTR(repeat, 0644, cycle_repeat_show, cycle_repeat_store);
+
+static ssize_t cycle_count_show(struct device *dev,
+				struct device_attribute *attr, char *buf)
+{
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct cycle_trig_data *data = led_cdev->trigger_data;
+
+	return snprintf(buf, PAGE_SIZE, "%d\n", data->cycle_count);
+}
+
+static DEVICE_ATTR(count, 0444, cycle_count_show, NULL);
 
 static ssize_t cycle_interval_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
@@ -253,6 +412,8 @@ static void cycle_trig_activate(struct led_classdev *led_cdev)
 
 	data->cdev = led_cdev;
 	data->interval = ktime_set(0, 10000000);
+	data->cycle_count = 0;
+	data->cycle_repeat = DEFAULT_COUNT;
 
 	data->plot_index = 0;
 	data->plot_count = (LED_FULL * 2);
@@ -272,9 +433,12 @@ static void cycle_trig_activate(struct led_classdev *led_cdev)
 
 		hrtimer_init(&data->timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
 		data->timer.function = led_cycle_function;
-		hrtimer_start(&data->timer, ktime_get(), HRTIMER_MODE_ABS);
 	}
 
+	device_create_file(led_cdev->dev, &dev_attr_status);
+	device_create_file(led_cdev->dev, &dev_attr_control);
+	device_create_file(led_cdev->dev, &dev_attr_repeat);
+	device_create_file(led_cdev->dev, &dev_attr_count);
 	device_create_file(led_cdev->dev, &dev_attr_interval);
 	device_create_file(led_cdev->dev, &dev_attr_rawplot);
 	device_create_file(led_cdev->dev, &dev_attr_plot);
@@ -286,6 +450,10 @@ static void cycle_trig_deactivate(struct led_classdev *led_cdev)
 	unsigned long flags;
 	u8 *plot;
 
+	device_remove_file(led_cdev->dev, &dev_attr_status);
+	device_remove_file(led_cdev->dev, &dev_attr_control);
+	device_remove_file(led_cdev->dev, &dev_attr_repeat);
+	device_remove_file(led_cdev->dev, &dev_attr_count);
 	device_remove_file(led_cdev->dev, &dev_attr_interval);
 	device_remove_file(led_cdev->dev, &dev_attr_rawplot);
 	device_remove_file(led_cdev->dev, &dev_attr_plot);
