@@ -147,6 +147,18 @@
 		};
 	};
 
+	i2c@0 {
+		status = "okay";
+
+		ics1523@26 {
+			reg = <0x26>;
+		};
+
+		dac3550@4d {
+			reg = <0x4d>;
+		};
+	};
+
 	leds {
 		compatible = "gpio-leds";
 
