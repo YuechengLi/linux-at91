@@ -29,6 +29,18 @@
 
 	ahb {
 		apb {
+			pinctrl@fffff400 {
+				usb1 {
+					pinctrl_usb1_vbus: usb1_vbus-0 {
+						atmel,pins = <AT91_PIOD 4 AT91_PERIPH_GPIO AT91_PINCTRL_NONE>;
+					};
+
+					pinctrl_usb1_pullup: usb1_pullup-0 {
+						atmel,pins = <AT91_PIOD 5 AT91_PERIPH_GPIO AT91_PINCTRL_MULTI_DRIVE>;
+					};
+				};
+			};
+
 			dbgu: serial@fffff200 {
 				status = "okay";
 			};
@@ -56,6 +68,9 @@
 
 			usb1: gadget@fffb0000 {
 				atmel,vbus-gpio = <&pioD 4 GPIO_ACTIVE_HIGH>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_usb1_vbus
+					     &pinctrl_usb1_pullup>;
 				status = "okay";
 			};
 
