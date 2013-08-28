@@ -56,6 +56,13 @@
 							<AT91_PIOB 22 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(1))>;
 					};
 				};
+
+				spi0 {
+					pinctrl_spi0_cs3_switch: spi0_cs3_switch-0 {
+						atmel,pins =
+							<AT91_PIOB 22 AT91_PERIPH_GPIO (AT91_PINCTRL_OUTPUT | AT91_PINCTRL_OUTPUT_VAL(0))>;
+					};
+				};
 			};
 
 			dbgu: serial@fffff200 {
@@ -117,6 +124,19 @@
 					bus-width = <4>;
 					cd-gpios = <&pioB 27 GPIO_ACTIVE_HIGH>;
 					wp-gpios = <&pioA 17 GPIO_ACTIVE_HIGH>;
+				};
+			};
+
+			spi0: spi@fffe0000 {
+				pinctrl-0 = <&pinctrl_spi0 &pinctrl_spi0_cs0>;
+				cs-gpios = <&pioA 3 GPIO_ACTIVE_HIGH>, <0>,
+					   <0>, <0>;
+				status = "okay";
+
+				mtd_dataflash@0 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <15000000>;
+					reg = <0>;
 				};
 			};
 		};
