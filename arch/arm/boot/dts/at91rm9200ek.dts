@@ -68,6 +68,7 @@
 
 			usb1: gadget@fffb0000 {
 				atmel,vbus-gpio = <&pioD 4 GPIO_ACTIVE_HIGH>;
+				atmel,pullup-gpio = <&pioD 5 GPIO_ACTIVE_HIGH>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_usb1_vbus
 					     &pinctrl_usb1_pullup>;
