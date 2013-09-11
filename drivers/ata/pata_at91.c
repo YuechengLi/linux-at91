@@ -28,6 +28,9 @@
 #include <linux/platform_device.h>
 #include <linux/ata_platform.h>
 #include <linux/platform_data/atmel.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_gpio.h>
 
 #include <mach/at91sam9_smc.h>
 #include <asm/gpio.h>
@@ -313,6 +316,37 @@ static struct ata_port_operations pata_at91_port_ops = {
 	.cable_detect	= ata_cable_40wire,
 };
 
+#if defined(CONFIG_OF)
+static const struct of_device_id at91_pata_dt_ids[] = {
+	{ .compatible = "atmel,at91rm9200-pata" },
+	{ /* sentinel */ }
+};
+MODULE_DEVICE_TABLE(of, at91_pata_dt_ids);
+
+static int at91_pata_dt_init(struct platform_device *pdev)
+{
+	struct at91_cf_data *board;
+
+	board = devm_kzalloc(&pdev->dev, sizeof(*board), GFP_KERNEL);
+	if (!board)
+		return -ENOMEM;
+
+	board->irq_pin = of_get_gpio(pdev->dev.of_node, 0);
+	board->det_pin = of_get_gpio(pdev->dev.of_node, 1);
+	board->vcc_pin = of_get_gpio(pdev->dev.of_node, 2);
+	board->rst_pin = of_get_gpio(pdev->dev.of_node, 3);
+
+	pdev->dev.platform_data = board;
+
+	return 0;
+}
+#else
+static int at91_pata_dt_init(struct platform_device *pdev)
+{
+	return -ENODEV;
+}
+#endif
+
 static int pata_at91_probe(struct platform_device *pdev)
 {
 	struct at91_cf_data *board = pdev->dev.platform_data;
@@ -325,6 +359,14 @@ static int pata_at91_probe(struct platform_device *pdev)
 	int irq_flags = 0;
 	int irq = 0;
 	int ret;
+
+	if (!board) {
+		ret = at91_pata_dt_init(pdev);
+		if (ret)
+			return ret;
+
+		board = pdev->dev.platform_data;
+	}
 
 	/*  get platform resources: IO/CTL memories and irq/rst pins */
 
@@ -445,6 +487,7 @@ static struct platform_driver pata_at91_driver = {
 	.driver		= {
 		.name		= DRV_NAME,
 		.owner		= THIS_MODULE,
+		.of_match_table = of_match_ptr(at91_pata_dt_ids),
 	},
 };
 
