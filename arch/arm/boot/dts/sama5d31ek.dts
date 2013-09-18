@@ -38,6 +38,25 @@
 		};
 	};
 
+	pwm: tcbpwm {
+		compatible = "atmel,tcb-pwm";
+		#pwm-cells = <3>;
+		tc-block = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_tcb0_tioa1>;
+	};
+
+	ledspwm {
+		compatible = "pwm-leds";
+
+		pwmtest {
+			label = "pwm-test";
+			pwms = <&pwm 2 100000 0>; /* cycle = 100000ns <=> 100us */
+			max-brightness = <255>;
+			linux,default-trigger = "none";
+		};
+	};
+
 	leds {
 		d3 {
 			label = "d3";

@@ -295,8 +295,10 @@ static int atmel_tcb_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 		}
 		min = div_u64((u64)NSEC_PER_SEC * atmel_tc_divisors[i], rate);
 		max = min << tc->tcb_config->counter_width;
+		/*
 		if (max >= period_ns)
 			break;
+		*/
 	}
 
 	/*
