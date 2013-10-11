@@ -55,4 +55,7 @@ static inline void pmc_write(struct at91_pmc *pmc, int offset, u32 value)
 	return writel_relaxed(value, pmc->regbase + offset);
 }
 
+extern void __init of_at91rm9200_clk_main_setup(struct device_node *np,
+						struct at91_pmc *pmc);
+
 #endif /* __PMC_H_ */
