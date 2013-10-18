@@ -64,12 +64,22 @@
 				};
 			};
 
+			pmc: pmc@fffffc00 {
+				periph: periphck {
+					macb0_clk {
+						atmel,clk-id = <34>;
+					};
+				};
+			};
+
 			macb0: ethernet@f0028000 {
 				compatible = "cdns,pc302-gem", "cdns,gem";
 				reg = <0xf0028000 0x100>;
 				interrupts = <34 IRQ_TYPE_LEVEL_HIGH 3>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_macb0_data_rgmii &pinctrl_macb0_signal_rgmii>;
+				clocks = <&periph 34>, <&periph 34>;
+				clock-names = "hclk", "pclk";
 				status = "disabled";
 			};
 		};

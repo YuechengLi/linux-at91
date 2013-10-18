@@ -9,6 +9,7 @@
 
 #include <dt-bindings/pinctrl/at91.h>
 #include <dt-bindings/interrupt-controller/irq.h>
+#include <dt-bindings/clk/at91.h>
 
 / {
 	ahb {
@@ -31,12 +32,28 @@
 				};
 			};
 
+			pmc: pmc@fffffc00 {
+				periph: periphck {
+					uart0_clk {
+						atmel,clk-id = <16>;
+						atmel,clk-default-divisor = <AT91SAM9X5_PERIPH_CLK_DIV2>;
+					};
+
+					uart1_clk {
+						atmel,clk-id = <17>;
+						atmel,clk-default-divisor = <AT91SAM9X5_PERIPH_CLK_DIV2>;
+					};
+				};
+			};
+
 			uart0: serial@f0024000 {
 				compatible = "atmel,at91sam9260-usart";
 				reg = <0xf0024000 0x200>;
 				interrupts = <16 IRQ_TYPE_LEVEL_HIGH 5>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart0>;
+				clocks = <&periph 16>;
+				clock-names = "usart";
 				status = "disabled";
 			};
 
@@ -46,6 +63,8 @@
 				interrupts = <17 IRQ_TYPE_LEVEL_HIGH 5>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_uart1>;
+				clocks = <&periph 17>;
+				clock-names = "usart";
 				status = "disabled";
 			};
 		};

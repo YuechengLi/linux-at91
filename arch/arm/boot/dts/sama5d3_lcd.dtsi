@@ -50,6 +50,21 @@
 					};
 				};
 			};
+
+			pmc: pmc@fffffc00 {
+				periph: periphck {
+					lcdc_clk {
+						atmel,clk-id = <36>;
+					};
+				};
+
+				system: systemck {
+					lcdck {
+						atmel,clk-id = <3>;
+						clocks = <&mck>;
+					};
+				};
+			};
 		};
 	};
 };

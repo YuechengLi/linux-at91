@@ -32,12 +32,28 @@
 
 			};
 
+			pmc: pmc@fffffc00 {
+				periph: periphck {
+					can0_clk {
+						atmel,clk-id = <40>;
+						atmel,clk-default-divisor = <AT91SAM9X5_PERIPH_CLK_DIV2>;
+					};
+
+					can1_clk {
+						atmel,clk-id = <41>;
+						atmel,clk-default-divisor = <AT91SAM9X5_PERIPH_CLK_DIV2>;
+					};
+				};
+			};
+
 			can0: can@f000c000 {
 				compatible = "atmel,at91sam9x5-can";
 				reg = <0xf000c000 0x300>;
 				interrupts = <40 IRQ_TYPE_LEVEL_HIGH 3>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_can0_rx_tx>;
+				clocks = <&periph 40>;
+				clock-names = "can_clk";
 				status = "disabled";
 			};
 
@@ -47,6 +63,8 @@
 				interrupts = <41 IRQ_TYPE_LEVEL_HIGH 3>;
 				pinctrl-names = "default";
 				pinctrl-0 = <&pinctrl_can1_rx_tx>;
+				clocks = <&periph 41>;
+				clock-names = "can_clk";
 				status = "disabled";
 			};
 		};
