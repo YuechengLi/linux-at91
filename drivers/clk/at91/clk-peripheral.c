@@ -31,6 +31,8 @@
 #define PERIPHERAL_RSHIFT_MASK	0x3
 #define PERIPHERAL_RSHIFT(val)	(((val) >> 16) & PERIPHERAL_RSHIFT_MASK)
 
+#define PERIPHERAL_MAX_SHIFT	4
+
 struct clk_peripheral {
 	struct clk_hw hw;
 	struct at91_pmc *pmc;
@@ -42,9 +44,11 @@ struct clk_peripheral {
 struct clk_sam9x5_peripheral {
 	struct clk_hw hw;
 	struct at91_pmc *pmc;
+	struct clk_range range;
 	u32 id;
-	u8 div;
-	u8 have_div_support;
+	u32 div;
+	bool div_supported;
+	bool auto_div;
 };
 
 #define to_clk_sam9x5_peripheral(hw) \
@@ -131,6 +135,31 @@ at91_clk_register_peripheral(struct at91_pmc *pmc, const char *name,
 	return clk;
 }
 
+static void clk_sam9x5_peripheral_autodiv(struct clk_sam9x5_peripheral *periph)
+{
+	struct clk *parent;
+	unsigned long parent_rate;
+	int shift = 0;
+
+	if (!periph->auto_div)
+		return;
+
+	if (periph->div_supported && periph->range.max) {
+		parent = clk_get_parent_by_index(periph->hw.clk, 0);
+		parent_rate = __clk_get_rate(parent);
+		if (!parent_rate)
+			return;
+
+		for (; shift < PERIPHERAL_MAX_SHIFT; shift++) {
+			if (parent_rate >> shift <= periph->range.max)
+				break;
+		}
+	}
+
+	periph->auto_div = false;
+	periph->div = shift;
+}
+
 static int clk_sam9x5_peripheral_enable(struct clk_hw *hw)
 {
 	struct clk_sam9x5_peripheral *periph = to_clk_sam9x5_peripheral(hw);
@@ -138,6 +167,7 @@ static int clk_sam9x5_peripheral_enable(struct clk_hw *hw)
 
 	if (periph->id < PERIPHERAL_ID_MIN)
 		return 0;
+
 	pmc_write(pmc, AT91_PMC_PCR, (periph->id & AT91_PMC_PCR_PID) |
 				     AT91_PMC_PCR_CMD |
 				     AT91_PMC_PCR_DIV(periph->div) |
@@ -165,6 +195,7 @@ static int clk_sam9x5_peripheral_is_enabled(struct clk_hw *hw)
 
 	if (periph->id < PERIPHERAL_ID_MIN)
 		return 1;
+
 	pmc_lock(pmc);
 	pmc_write(pmc, AT91_PMC_PCR, (periph->id & AT91_PMC_PCR_PID));
 	ret = !!(pmc_read(pmc, AT91_PMC_PCR) & AT91_PMC_PCR_EN);
@@ -179,47 +210,69 @@ clk_sam9x5_peripheral_recalc_rate(struct clk_hw *hw,
 {
 	struct clk_sam9x5_peripheral *periph = to_clk_sam9x5_peripheral(hw);
 	struct at91_pmc *pmc = periph->pmc;
-	u32 shift;
+	u32 tmp;
 
-	if (periph->id < PERIPHERAL_ID_MIN || !periph->have_div_support)
+	if (periph->id < PERIPHERAL_ID_MIN)
 		return parent_rate;
+
 	pmc_lock(pmc);
 	pmc_write(pmc, AT91_PMC_PCR, (periph->id & AT91_PMC_PCR_PID));
-	shift = PERIPHERAL_RSHIFT(pmc_read(pmc, AT91_PMC_PCR));
+	tmp = pmc_read(pmc, AT91_PMC_PCR);
 	pmc_unlock(pmc);
-	return parent_rate >> shift;
+
+	if (tmp & AT91_PMC_PCR_EN) {
+		periph->div = PERIPHERAL_RSHIFT(tmp);
+		periph->auto_div = false;
+	} else {
+		clk_sam9x5_peripheral_autodiv(periph);
+	}
+
+	return parent_rate >> periph->div;
 }
 
 static long clk_sam9x5_peripheral_round_rate(struct clk_hw *hw,
 					     unsigned long rate,
 					     unsigned long *parent_rate)
 {
-	int shift;
+	int shift = 0;
 	unsigned long best_rate;
 	unsigned long best_diff;
-	unsigned long cur_rate;
+	unsigned long cur_rate = *parent_rate;
 	unsigned long cur_diff;
 	struct clk_sam9x5_peripheral *periph = to_clk_sam9x5_peripheral(hw);
 
-	if (periph->id < 2 || !periph->have_div_support)
+	if (periph->id < PERIPHERAL_ID_MIN || !periph->div_supported)
 		return *parent_rate;
-	if (rate >= *parent_rate)
-		return rate;
-	best_diff = *parent_rate - rate;
-	best_rate = *parent_rate;
-	for (shift = 1; shift < 4; shift++) {
+
+	if (periph->range.max) {
+		for (; shift < PERIPHERAL_MAX_SHIFT; shift++) {
+			cur_rate = *parent_rate >> shift;
+			if (cur_rate <= periph->range.max)
+				break;
+		}
+	}
+
+	if (rate >= cur_rate)
+		return cur_rate;
+
+	best_diff = cur_rate - rate;
+	best_rate = cur_rate;
+	for (; shift < PERIPHERAL_MAX_SHIFT; shift++) {
 		cur_rate = *parent_rate >> shift;
 		if (cur_rate < rate)
 			cur_diff = rate - cur_rate;
 		else
 			cur_diff = cur_rate - rate;
+
 		if (cur_diff < best_diff) {
 			best_diff = cur_diff;
 			best_rate = cur_rate;
 		}
+
 		if (!best_diff || cur_rate < rate)
 			break;
 	}
+
 	return best_rate;
 }
 
@@ -229,15 +282,19 @@ static int clk_sam9x5_peripheral_set_rate(struct clk_hw *hw,
 {
 	int shift;
 	struct clk_sam9x5_peripheral *periph = to_clk_sam9x5_peripheral(hw);
-	if (periph->id < 2 || !periph->have_div_support) {
+	if (periph->id < PERIPHERAL_ID_MIN) {
 		if (parent_rate == rate)
 			return 0;
 		else
 			return -EINVAL;
 	}
 
-	for (shift = 0; shift < 4; shift++) {
+	if (periph->range.max && rate > periph->range.max)
+		return -EINVAL;
+
+	for (shift = 0; shift < PERIPHERAL_MAX_SHIFT; shift++) {
 		if (parent_rate >> shift == rate) {
+			periph->auto_div = false;
 			periph->div = shift;
 			return 0;
 		}
@@ -258,7 +315,7 @@ static const struct clk_ops sam9x5_peripheral_ops = {
 static struct clk * __init
 at91_clk_register_sam9x5_peripheral(struct at91_pmc *pmc, const char *name,
 				    const char *parent_name, u32 id,
-				    u32 default_div)
+				    struct clk_range *range)
 {
 	struct clk_sam9x5_peripheral *periph;
 	struct clk *clk = NULL;
@@ -275,59 +332,31 @@ at91_clk_register_sam9x5_peripheral(struct at91_pmc *pmc, const char *name,
 	init.ops = &sam9x5_peripheral_ops;
 	init.parent_names = (parent_name ? &parent_name : NULL);
 	init.num_parents = (parent_name ? 1 : 0);
-	init.flags = CLK_SET_RATE_GATE;
+	init.flags = 0;
 
 	periph->id = id;
 	periph->hw.init = &init;
-	periph->div = default_div;
+	periph->div = 0;
 	periph->pmc = pmc;
+	periph->auto_div = true;
 
 	clk = clk_register(NULL, &periph->hw);
 	if (IS_ERR(clk))
 		kfree(periph);
 
+	clk_sam9x5_peripheral_autodiv(periph);
+
 	return clk;
-}
-
-struct clk_periph_data {
-	struct clk **clks;
-	u8 *ids;
-	unsigned int clk_num;
-};
-
-static struct clk * __init
-of_clk_src_periph_get(struct of_phandle_args *clkspec, void *data)
-{
-	struct clk_periph_data *clk_data = data;
-	unsigned int id = clkspec->args[0];
-	int i;
-
-	if (id >= PERIPHERAL_MAX)
-		goto err;
-
-	for (i = 0; i < clk_data->clk_num; i++) {
-		if (clk_data->ids[i] == id)
-			return clk_data->clks[i];
-	}
-
-err:
-	pr_err("%s: invalid clock id %d\n", __func__, id);
-	return ERR_PTR(-EINVAL);
 }
 
 static void __init
 of_at91_clk_periph_setup(struct device_node *np, struct at91_pmc *pmc, u8 type)
 {
 	int num;
-	int i;
 	u32 id;
 	struct clk *clk;
 	const char *parent_name;
 	const char *name;
-	u32 divisor;
-	struct clk **clks;
-	u8 *ids;
-	struct clk_periph_data *clktab;
 	struct device_node *periphclknp;
 
 	parent_name = of_clk_get_parent_name(np, 0);
@@ -338,60 +367,33 @@ of_at91_clk_periph_setup(struct device_node *np, struct at91_pmc *pmc, u8 type)
 	if (!num || num > PERIPHERAL_MAX)
 		return;
 
-	clktab = kzalloc(sizeof(*clktab), GFP_KERNEL);
-	if (!clktab)
-		return;
-
-	ids = kzalloc(num * sizeof(*ids), GFP_KERNEL);
-	if (!ids)
-		goto out_free_clktab;
-
-	clks = kzalloc(num * sizeof(*clks), GFP_KERNEL);
-	if (!clks)
-		goto out_free_ids;
-
-	i = 0;
 	for_each_child_of_node(np, periphclknp) {
 		name = periphclknp->name;
 
-		if (of_property_read_u32(periphclknp, "atmel,clk-id", &id))
-			goto out_free_clks;
+		if (of_property_read_u32(periphclknp, "reg", &id))
+			continue;
 		if (id >= PERIPHERAL_MAX)
-			goto out_free_clks;
+			continue;
 
 		if (type == PERIPHERAL_AT91RM9200) {
 			clk = at91_clk_register_peripheral(pmc, name,
 							   parent_name, id);
 		} else {
-			if (of_property_read_u32(periphclknp,
-						 "atmel,clk-default-divisor",
-						 &divisor))
-				divisor = 0;
+			struct clk_range range = CLK_RANGE(0, 0);
+
+			of_at91_get_clk_range(periphclknp,
+					      "atmel,clk-output-range",
+					      &range);
 
 			clk = at91_clk_register_sam9x5_peripheral(pmc, name,
 								  parent_name,
-								  id,
-								  divisor);
+								  id, &range);
 		}
 		if (IS_ERR(clk))
-			goto out_free_clks;
+			continue;
 
-		clks[i] = clk;
-		ids[i++] = id;
+		of_clk_add_provider(periphclknp, of_clk_src_simple_get, clk);
 	}
-
-	clktab->clk_num = num;
-	clktab->clks = clks;
-	clktab->ids = ids;
-	of_clk_add_provider(np, of_clk_src_periph_get, clktab);
-	return;
-
-out_free_clks:
-	kfree(clks);
-out_free_ids:
-	kfree(ids);
-out_free_clktab:
-	kfree(clktab);
 }
 
 void __init of_at91rm9200_clk_periph_setup(struct device_node *np,

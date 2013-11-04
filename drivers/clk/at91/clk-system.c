@@ -97,42 +97,12 @@ at91_clk_register_system(struct at91_pmc *pmc, const char *name,
 	return clk;
 }
 
-struct clk_system_data {
-	struct clk **clks;
-	u8 *ids;
-	unsigned int clk_num;
-};
-
-static struct clk * __init
-of_clk_src_system_get(struct of_phandle_args *clkspec, void *data)
-{
-	struct clk_system_data *clk_data = data;
-	unsigned int id = clkspec->args[0];
-	int i;
-
-	if (id > SYSTEM_MAX_ID)
-		goto err;
-
-	for (i = 0; i < clk_data->clk_num; i++) {
-		if (clk_data->ids[i] == id)
-			return clk_data->clks[i];
-	}
-
-err:
-	pr_err("%s: invalid clock id %d\n", __func__, id);
-	return ERR_PTR(-EINVAL);
-}
-
 static void __init
 of_at91_clk_sys_setup(struct device_node *np, struct at91_pmc *pmc)
 {
-	int i;
 	int num;
 	u32 id;
 	struct clk *clk;
-	u8 *ids;
-	struct clk **clks;
-	struct clk_system_data *clktab;
 	const char *name;
 	struct device_node *sysclknp;
 	const char *parent_name;
@@ -141,49 +111,20 @@ of_at91_clk_sys_setup(struct device_node *np, struct at91_pmc *pmc)
 	if (num > (SYSTEM_MAX_ID + 1))
 		return;
 
-	clktab = kzalloc(sizeof(*clktab), GFP_KERNEL);
-	if (!clktab)
-		return;
-
-	ids = kzalloc(num * sizeof(*ids), GFP_KERNEL);
-	if (!ids)
-		goto out_free_clktab;
-
-	clks = kzalloc(num * sizeof(*clks), GFP_KERNEL);
-	if (!clks)
-		goto out_free_ids;
-
-	i = 0;
 	for_each_child_of_node(np, sysclknp) {
 		name = sysclknp->name;
 
-		if (of_property_read_u32(sysclknp, "atmel,clk-id", &id))
-			goto out_free_clks;
+		if (of_property_read_u32(sysclknp, "reg", &id))
+			continue;
 
 		parent_name = of_clk_get_parent_name(sysclknp, 0);
 
 		clk = at91_clk_register_system(pmc, name, parent_name, id);
 		if (IS_ERR(clk))
-			goto out_free_clks;
+			continue;
 
-		clks[i] = clk;
-		ids[i] = id;
-
-		i++;
+		of_clk_add_provider(sysclknp, of_clk_src_simple_get, clk);
 	}
-
-	clktab->clk_num = num;
-	clktab->clks = clks;
-	clktab->ids = ids;
-	of_clk_add_provider(np, of_clk_src_system_get, clktab);
-	return;
-
-out_free_clks:
-	kfree(clks);
-out_free_ids:
-	kfree(ids);
-out_free_clktab:
-	kfree(clktab);
 }
 
 void __init of_at91rm9200_clk_sys_setup(struct device_node *np,

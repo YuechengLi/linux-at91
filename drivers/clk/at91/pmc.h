@@ -47,13 +47,16 @@ static inline void pmc_unlock(struct at91_pmc *pmc)
 
 static inline u32 pmc_read(struct at91_pmc *pmc, int offset)
 {
-	return readl_relaxed(pmc->regbase + offset);
+	return readl(pmc->regbase + offset);
 }
 
 static inline void pmc_write(struct at91_pmc *pmc, int offset, u32 value)
 {
-	return writel_relaxed(value, pmc->regbase + offset);
+	writel(value, pmc->regbase + offset);
 }
+
+int of_at91_get_clk_range(struct device_node *np, const char *propname,
+			  struct clk_range *range);
 
 extern void __init of_at91rm9200_clk_main_setup(struct device_node *np,
 						struct at91_pmc *pmc);

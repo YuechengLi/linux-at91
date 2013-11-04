@@ -35,6 +35,29 @@ void at91sam9_idle(void)
 	cpu_do_idle();
 }
 
+int of_at91_get_clk_range(struct device_node *np, const char *propname,
+			  struct clk_range *range)
+{
+	u32 min, max;
+	int ret;
+
+	ret = of_property_read_u32_index(np, propname, 0, &min);
+	if (ret)
+		return ret;
+
+	ret = of_property_read_u32_index(np, propname, 1, &max);
+	if (ret)
+		return ret;
+
+	if (range) {
+		range->min = min;
+		range->max = max;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(of_at91_get_clk_range);
+
 static void pmc_irq_mask(struct irq_data *d)
 {
 	struct at91_pmc *pmc = irq_data_get_irq_chip_data(d);

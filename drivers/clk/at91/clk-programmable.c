@@ -299,32 +299,6 @@ static const struct clk_programmable_layout at91sam9x5_programmable_layout = {
 	.have_slck_mck = 0,
 };
 
-struct clk_prog_data {
-	struct clk **clks;
-	u8 *ids;
-	unsigned int clk_num;
-};
-
-static struct clk * __init
-of_clk_src_periph_get(struct of_phandle_args *clkspec, void *data)
-{
-	struct clk_prog_data *clk_data = data;
-	unsigned int id = clkspec->args[0];
-	int i;
-
-	if (id > PROG_ID_MAX)
-		goto err;
-
-	for (i = 0; i < clk_data->clk_num; i++) {
-		if (clk_data->ids[i] == id)
-			return clk_data->clks[i];
-	}
-
-err:
-	pr_err("%s: invalid clock id %d\n", __func__, id);
-	return ERR_PTR(-EINVAL);
-}
-
 static void __init
 of_at91_clk_prog_setup(struct device_node *np, struct at91_pmc *pmc,
 		       const struct clk_programmable_layout *layout)
@@ -335,9 +309,6 @@ of_at91_clk_prog_setup(struct device_node *np, struct at91_pmc *pmc,
 	unsigned int irq;
 	struct clk *clk;
 	int num_parents;
-	u8 *ids;
-	struct clk **clks;
-	struct clk_prog_data *clktab;
 	const char *parent_names[PROG_SOURCE_MAX];
 	const char *name;
 	struct device_node *progclknp;
@@ -356,51 +327,24 @@ of_at91_clk_prog_setup(struct device_node *np, struct at91_pmc *pmc,
 	if (!num || num > (PROG_ID_MAX + 1))
 		return;
 
-	clktab = kzalloc(sizeof(*clktab), GFP_KERNEL);
-	if (!clktab)
-		return;
-
-	ids = kzalloc(num * sizeof(*ids), GFP_KERNEL);
-	if (!ids)
-		goto out_free_clktab;
-
-	clks = kzalloc(num * sizeof(*clks), GFP_KERNEL);
-	if (!clks)
-		goto out_free_ids;
-
-	i = 0;
 	for_each_child_of_node(np, progclknp) {
 		name = progclknp->name;
 
-		if (of_property_read_u32(progclknp, "atmel,clk-id", &id))
-			goto out_free_clks;
+		if (of_property_read_u32(progclknp, "reg", &id))
+			continue;
 
 		irq = irq_of_parse_and_map(np, 0);
 		if (!irq)
-			goto out_free_clks;
+			continue;
 
 		clk = at91_clk_register_programmable(pmc, irq, name,
 						     parent_names, num_parents,
 						     id, layout);
 		if (IS_ERR(clk))
-			goto out_free_clks;
+			continue;
 
-		clks[i] = clk;
-		ids[i++] = id;
+		of_clk_add_provider(progclknp, of_clk_src_simple_get, clk);
 	}
-
-	clktab->clk_num = num;
-	clktab->clks = clks;
-	clktab->ids = ids;
-	of_clk_add_provider(np, of_clk_src_periph_get, clktab);
-	return;
-
-out_free_clks:
-	kfree(clks);
-out_free_ids:
-	kfree(ids);
-out_free_clktab:
-	kfree(clktab);
 }
 
 

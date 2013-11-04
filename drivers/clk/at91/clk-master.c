@@ -192,20 +192,14 @@ static const struct clk_master_layout at91sam9x5_master_layout = {
 static struct clk_master_characteristics * __init
 of_at91_clk_master_get_characteristics(struct device_node *np)
 {
-	u32 tmp;
 	struct clk_master_characteristics *characteristics;
 
 	characteristics = kzalloc(sizeof(*characteristics), GFP_KERNEL);
 	if (!characteristics)
 		return NULL;
 
-	if (of_property_read_u32_index(np, "atmel,clk-output-range", 0, &tmp))
+	if (of_at91_get_clk_range(np, "atmel,clk-output-range", &characteristics->output))
 		goto out_free_characteristics;
-	characteristics->output.min = tmp;
-
-	if (of_property_read_u32_index(np, "atmel,clk-output-range", 1, &tmp))
-		goto out_free_characteristics;
-	characteristics->output.max = tmp;
 
 	of_property_read_u32_array(np, "atmel,clk-divisors",
 				   characteristics->divisors, 4);

@@ -389,13 +389,8 @@ of_at91_clk_pll_get_characteristics(struct device_node *np)
 	u16 *icpll = NULL;
 	struct clk_pll_characteristics *characteristics;
 
-	if (of_property_read_u32_index(np, "atmel,clk-input-range", 0, &tmp))
+	if (of_at91_get_clk_range(np, "atmel,clk-input-range", &input))
 		return NULL;
-	input.min = tmp;
-
-	if (of_property_read_u32_index(np, "atmel,clk-input-range", 1, &tmp))
-		return NULL;
-	input.max = tmp;
 
 	if (of_property_read_u32(np, "#atmel,pll-clk-output-range-cells",
 				 &num_cells))
@@ -487,7 +482,7 @@ of_at91_clk_pll_setup(struct device_node *np, struct at91_pmc *pmc,
 	const char *name = np->name;
 	struct clk_pll_characteristics *characteristics;
 
-	if (of_property_read_u32(np, "atmel,clk-id", &id))
+	if (of_property_read_u32(np, "reg", &id))
 		return;
 
 	parent_name = of_clk_get_parent_name(np, 0);
