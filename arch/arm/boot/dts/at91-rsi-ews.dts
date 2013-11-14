@@ -1,0 +1,175 @@
+/*
+ * at91-rsi-ews.dts - Device Tree file for RSI EWS board
+ *
+ * Copyright (C) 2013 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91rm9200.dtsi"
+
+/ {
+	model = "RSI EWS board";
+	compatible = "rsi,ews", "atmel,at91rm9200";
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		main_clock: clock@0 {
+			compatible = "atmel,osc", "fixed-clock";
+			clock-frequency = <18432000>;
+		};
+	};
+
+	ahb {
+		apb {
+			dbgu: serial@fffff200 {
+				status = "okay";
+			};
+
+			usart1: serial@fffc4000 {
+				pinctrl-0 =
+						<&pinctrl_uart1
+						 &pinctrl_uart1_rts
+						 &pinctrl_uart1_cts
+						 &pinctrl_uart1_dtr_dsr
+						 &pinctrl_uart1_dcd
+						 &pinctrl_uart1_ri>;
+				status = "okay";
+			};
+
+			usart3: serial@fffcc000 {
+				pinctrl-0 =
+						<&pinctrl_uart3
+						 &pinctrl_uart3_rts>;
+				status = "okay";
+			};
+
+			macb0: ethernet@fffbc000 {
+				phy-mode = "rmii";
+				status = "okay";
+				/* phy irq on PC4 */
+			};
+
+			mmc0: mmc@fffb4000 {
+				pinctrl-0 = <
+					&pinctrl_board_mmc0
+					&pinctrl_mmc0_clk
+					&pinctrl_mmc0_slot0_cmd_dat0
+					&pinctrl_mmc0_slot0_dat1_3>;
+				status = "okay";
+				slot@0 {
+					reg = <0>;
+					bus-width = <4>;
+					cd-gpios = <&pioB 27 GPIO_ACTIVE_HIGH>;
+					wp-gpios = <&pioB 29 GPIO_ACTIVE_HIGH>;
+				};
+			};
+
+			pinctrl@fffff400 {
+				mmc0 {
+					pinctrl_board_mmc0: mmc0-board {
+						atmel,pins =
+							<AT91_PIOB 27 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP_DEGLITCH
+							 AT91_PIOC 29 AT91_PERIPH_GPIO AT91_PINCTRL_PULL_UP>;
+					};
+				};
+			};
+
+			spi0: spi@fffe0000 {
+				status = "okay";
+				cs-gpios = <&pioA 3 GPIO_ACTIVE_HIGH>, <&pioA 4 GPIO_ACTIVE_HIGH>, <0>, <0>;
+				mtd_dataflash@0 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <15000000>;
+					reg = <0>;
+				};
+
+				mtd_dataflash@1 {
+					compatible = "atmel,at45", "atmel,dataflash";
+					spi-max-frequency = <15000000>;
+					reg = <1>;
+				};
+			};
+		};
+
+		usb0: ohci@00300000 {
+			num-ports = <1>;
+			status = "okay";
+		};
+
+		nor_flash@10000000 {
+			compatible = "cfi-flash";
+			reg = <0x10000000 0x1000000>;
+			linux,mtd-name = "physmap-flash.0";
+			bank-width = <2>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot@0 {
+				label = "boot";
+				reg = <0x00000 0x60000>;
+			};
+
+			kernel@60000 {
+				label = "kernel";
+				reg = <0x60000 0x1a0000>;
+			};
+
+			root@200000 {
+				label = "kernel";
+				reg = <0x200000 0x800000>;
+			};
+
+			kernelupd@A00000  {
+				label = "kernelupd";
+				reg = <0xA00000 0x180000>;
+			};
+
+			rootupd@B80000  {
+				label = "rootupd";
+				reg = <0xB80000 0x480000>;
+			};
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led0 {
+			label = "led0";
+			gpios = <&pioB 6 GPIO_ACTIVE_HIGH>;
+		};
+
+		led1 {
+			label = "led1";
+			gpios = <&pioB 7 GPIO_ACTIVE_HIGH>;
+		};
+
+		led2 {
+			label = "led2";
+			gpios = <&pioB 8 GPIO_ACTIVE_HIGH>;
+		};
+
+		led3 {
+			label = "led3";
+			gpios = <&pioB 9 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	i2c@0 {
+		status = "okay";
+
+		ds1337@68 {
+			compatible = "dallas,ds1337";
+			reg = <0x68>;
+		};
+
+		24c01@50 {
+			compatible = "at24,24c01";
+			reg = <0x50>;
+		};
+	};
+};
