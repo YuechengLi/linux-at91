@@ -1,0 +1,83 @@
+/*
+ * at91-csb637.dts - Device Tree file for Cogent CSB637 board
+ *
+ * Copyright (C) 2013 Jean-Christophe PLAGNIOL-VILLARD <plagnioj@jcrosoft.com>
+ *
+ * Licensed under GPLv2 only
+ */
+/dts-v1/;
+#include "at91rm9200.dtsi"
+
+/ {
+	model = "Cogent CSB637 board";
+	compatible = "cogent,csb637", "atmel,at91rm9200";
+
+	clocks {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		main_clock: clock@0 {
+			compatible = "atmel,osc", "fixed-clock";
+			clock-frequency = <3686400>;
+		};
+	};
+
+	ahb {
+		apb {
+			dbgu: serial@fffff200 {
+				status = "okay";
+			};
+
+			macb0: ethernet@fffbc000 {
+				phy-mode = "mii";
+				status = "okay";
+				/* phy irq on PC0 */
+				pinctrl-0 = <&pinctrl_macb_rmii &pinctrl_macb_rmii_mii>;
+			};
+
+			spi0: spi@fffe0000 {
+				status = "okay";
+			};
+
+			usb1: gadget@fffb0000 {
+				status = "okay";
+				atmel,vbus-gpio = <&pioB 28 GPIO_ACTIVE_HIGH>;
+				atmel,pullup-gpio = <&pioB 1 GPIO_ACTIVE_HIGH>;
+			};
+		};
+
+		usb0: ohci@00300000 {
+			num-ports = <2>;
+			status = "okay";
+		};
+
+		nor_flash@10000000 {
+			compatible = "cfi-flash";
+			reg = <0x10000000 0x1000000>;
+			linux,mtd-name = "physmap-flash.0";
+			bank-width = <2>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			boot@0 {
+				label = "uMON flash";
+				reg = <0x00000 0x1000000>;
+			};
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		d1 {
+			label = "d1";
+			gpios = <&pioB 2 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
+		};
+	};
+
+	i2c@0 {
+		status = "okay";
+	};
+};

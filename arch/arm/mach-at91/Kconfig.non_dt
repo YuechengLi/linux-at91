@@ -69,12 +69,6 @@ config MACH_CSB337
 	  Select this if you are using Cogent's CSB337 board.
 	  <http://www.cogcomp.com/csb_csb337.htm>
 
-config MACH_CSB637
-	bool "Cogent CSB637"
-	help
-	  Select this if you are using Cogent's CSB637 board.
-	  <http://www.cogcomp.com/csb_csb637.htm>
-
 config MACH_ATEB9200
 	bool "Embest ATEB9200"
 	help
