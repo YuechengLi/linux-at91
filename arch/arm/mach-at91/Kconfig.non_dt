@@ -87,13 +87,6 @@ config MACH_KB9200
 	  Select this if you are using KwikByte's KB920x board.
 	  <http://www.kwikbyte.com/KB9202.html>
 
-config MACH_ECBAT91
-	bool "emQbit ECB_AT91 SBC"
-	select HAVE_AT91_DATAFLASH_CARD
-	help
-	  Select this if you are using emQbit's ECB_AT91 board.
-	  <http://wiki.emqbit.com/free-ecb-at91>
-
 config MACH_YL9200
 	bool "ucDragon YL-9200"
 	help
