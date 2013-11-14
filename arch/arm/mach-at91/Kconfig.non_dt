@@ -81,12 +81,6 @@ config MACH_ATEB9200
 	  Select this if you are using Embest's ATEB9200 board.
 	  <http://www.embedinfo.com/english/product/ATEB9200.asp>
 
-config MACH_KB9200
-	bool "KwikByte KB920x"
-	help
-	  Select this if you are using KwikByte's KB920x board.
-	  <http://www.kwikbyte.com/KB9202.html>
-
 config MACH_YL9200
 	bool "ucDragon YL-9200"
 	help
