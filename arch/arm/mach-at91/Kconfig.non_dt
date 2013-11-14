@@ -87,12 +87,6 @@ config MACH_KB9200
 	  Select this if you are using KwikByte's KB920x board.
 	  <http://www.kwikbyte.com/KB9202.html>
 
-config MACH_PICOTUX2XX
-	bool "picotux 200"
-	help
-	  Select this if you are using a picotux 200.
-	  <http://www.picotux.com/>
-
 config MACH_ECBAT91
 	bool "emQbit ECB_AT91 SBC"
 	select HAVE_AT91_DATAFLASH_CARD
