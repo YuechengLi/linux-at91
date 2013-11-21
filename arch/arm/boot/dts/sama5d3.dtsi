@@ -732,12 +732,28 @@
 					clock-frequency = <32768>;
 				};
 
-				main: mainck {
-					compatible = "atmel,at91rm9200-clk-main";
+				mainrcosc: mainrcoscck {
+					compatible = "atmel,at91sam9x5-clk-main-rc-osc";
+					#clock-cells = <0>;
+					interrupt-parent = <&pmc>;
+					interrupts = <AT91_PMC_MOSCRCS>;
+					clock-frequency = <12000000>;
+					clock-accuracy = <50000000>;
+				};
+				mainxtalosc: mainxtaloscck {
+					compatible = "atmel,at91rm9200-clk-main-xtal-osc";
 					#clock-cells = <0>;
 					interrupt-parent = <&pmc>;
 					interrupts = <AT91_PMC_MOSCS>;
-					clocks = <&clk32k>;
+					clock-frequency = <12000000>;
+				};
+
+				main: mainck {
+					compatible = "atmel,at91sam9x5-clk-main";
+					#clock-cells = <0>;
+					interrupt-parent = <&pmc>;
+					interrupts = <AT91_PMC_MOSCSELS>;
+					clocks = <&mainrcosc &mainxtalosc>;
 				};
 
 				plla: pllack {
