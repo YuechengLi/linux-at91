@@ -726,12 +726,6 @@
 				#size-cells = <0>;
 				#interrupt-cells = <1>;
 
-				clk32k: slck {
-					compatible = "fixed-clock";
-					#clock-cells = <0>;
-					clock-frequency = <32768>;
-				};
-
 				mainrcosc: mainrcoscck {
 					compatible = "atmel,at91sam9x5-clk-main-rc-osc";
 					#clock-cells = <0>;
@@ -740,6 +734,7 @@
 					clock-frequency = <12000000>;
 					clock-accuracy = <50000000>;
 				};
+
 				mainxtalosc: mainxtaloscck {
 					compatible = "atmel,at91rm9200-clk-main-xtal-osc";
 					#clock-cells = <0>;
@@ -1075,6 +1070,30 @@
 				compatible = "atmel,at91sam9260-wdt";
 				reg = <0xfffffe40 0x10>;
 				status = "disabled";
+			};
+
+			sckc@fffffe50 {
+				compatible = "atmel,at91sam9x5-sckc";
+				reg = <0xfffffe50 0x4>;
+
+				slowrcosc: slowrcoscck {
+					compatible = "atmel,at91sam9x5-clk-slow-rc-osc";
+					#clock-cells = <0>;
+					clock-frequency = <32768>;
+					clock-accuracy = <50000000>;
+				};
+
+				slowxtalosc: slowxtaloscck {
+					compatible = "atmel,at91sam9x5-clk-slow-xtal-osc";
+					#clock-cells = <0>;
+					clock-frequency = <32768>;
+				};
+
+				clk32k: slowck {
+					compatible = "atmel,at91sam9x5-clk-slow";
+					#clock-cells = <0>;
+					clocks = <&slowrcosc &slowxtalosc>;
+				};
 			};
 
 			rtc@fffffeb0 {
