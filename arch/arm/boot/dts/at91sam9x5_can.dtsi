@@ -13,6 +13,24 @@
 / {
 	ahb {
 		apb {
+			pinctrl@fffff400 {
+				can0 {
+					pinctrl_can0: can0-0 {
+						atmel,pins =
+							<AT91_PIOA 9 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PA9 periph B CANRX */
+							 AT91_PIOA 10 AT91_PERIPH_B AT91_PINCTRL_NONE>;	/* PA10 periph B CANTX */
+					};
+				};
+
+				can1 {
+					pinctrl_can1: can1-0 {
+						atmel,pins =
+							<AT91_PIOA 6 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PA6 periph B CANRX */
+							 AT91_PIOA 5 AT91_PERIPH_B AT91_PINCTRL_NONE>;	/* PA5 periph B CANTX */
+					};
+				};
+			};
+
 			pmc: pmc@fffffc00 {
 				periphck {
 					can0_clk: can0_clk {
