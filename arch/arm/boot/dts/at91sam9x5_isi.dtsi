@@ -13,6 +13,30 @@
 / {
 	ahb {
 		apb {
+			pinctrl@fffff400 {
+				isi {
+					pinctrl_isi: isi-0 {
+						atmel,pins =
+							<AT91_PIOC 0 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC0 periph B ISI_D0 pin */
+							 AT91_PIOC 1 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC1 periph B ISI_D1 pin */
+							 AT91_PIOC 2 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC2 periph B ISI_D2 pin */
+							 AT91_PIOC 3 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC3 periph B ISI_D3 pin */
+							 AT91_PIOC 4 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC4 periph B ISI_D4 pin */
+							 AT91_PIOC 5 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC5 periph B ISI_D5 pin */
+							 AT91_PIOC 6 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC6 periph B ISI_D6 pin */
+							 AT91_PIOC 7 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC7 periph B ISI_D7 pin */
+							 AT91_PIOC 8 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC8 periph B ISI_D8 pin */
+							 AT91_PIOC 9 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC9 periph B ISI_D9 pin */
+							 AT91_PIOC 10 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC10 periph B ISI_D10 pin */
+							 AT91_PIOC 11 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC11 periph B ISI_D11 pin */
+							 AT91_PIOC 12 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC12 periph B ISI_PCK pin */
+							 AT91_PIOC 13 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC13 periph B ISI_VSYNC pin */
+							 AT91_PIOC 14 AT91_PERIPH_B AT91_PINCTRL_NONE	/* PC14 periph B ISI_HSYNC pin */
+							 AT91_PIOC 15 AT91_PERIPH_B AT91_PINCTRL_NONE>;	/* PC15 periph B ISI_MCK pin */
+					};
+				};
+			};
+
 			pmc: pmc@fffffc00 {
 				periphck {
 					isi_clk: isi_clk {
