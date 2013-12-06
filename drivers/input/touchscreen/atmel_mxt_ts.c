@@ -691,6 +691,9 @@ static void mxt_handle_pdata(struct mxt_data *data)
 	const struct mxt_platform_data *pdata = data->pdata;
 	u8 voltage;
 
+	if (!pdata->x_line && !pdata->y_line)
+		return;
+
 	/* Set touchscreen lines */
 	mxt_write_object(data, MXT_TOUCH_MULTI_T9, MXT_TOUCH_XSIZE,
 			pdata->x_line);
@@ -1136,8 +1139,15 @@ static int mxt_probe(struct i2c_client *client,
 	int error;
 	unsigned int num_mt_slots;
 
-	if (!pdata)
-		return -EINVAL;
+	if (!pdata) {
+		if (client->dev.of_node) {
+			pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
+			if (!pdata)
+				return -EINVAL;
+		} else {
+			return -EINVAL;
+		}
+	}
 
 	data = kzalloc(sizeof(struct mxt_data), GFP_KERNEL);
 	input_dev = input_allocate_device();
