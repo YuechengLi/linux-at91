@@ -306,6 +306,22 @@ static void __init sama5_dt_device_init(void)
 		}
 	}
 
+	/* Hack for PDA 7" display module to update lcd settings */
+	np = of_find_compatible_node(NULL, NULL, "atmel,atmel_mxt_ts");
+	if (np) {
+		at91_tft_vga_modes[0].name = "PALM";
+		at91_tft_vga_modes[0].left_margin = 128;
+		at91_tft_vga_modes[0].right_margin = 0;
+		at91_tft_vga_modes[0].upper_margin = 23;
+		at91_tft_vga_modes[0].lower_margin = 22;
+		at91_tft_vga_modes[0].hsync_len = 5;
+		at91_tft_vga_modes[0].vsync_len = 5;
+
+		memcpy(at91fb_default_monspecs.manufacturer, "PALM", 4);
+
+		ek_lcdc_data.default_lcdcon2 = LCDC_LCDCFG5_MODE_OUTPUT_18BPP;
+	}
+
 	of_platform_populate(NULL, of_default_bus_match_table, at91_auxdata_lookup, NULL);
 	platform_add_devices(sensors, ARRAY_SIZE(sensors));
 }
