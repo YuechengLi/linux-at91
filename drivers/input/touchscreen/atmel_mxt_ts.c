@@ -1141,7 +1141,7 @@ static int mxt_probe(struct i2c_client *client,
 
 	if (!pdata) {
 		if (client->dev.of_node) {
-			pdata = kzalloc(sizeof(*pdata), GFP_KERNEL);
+			pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
 			if (!pdata)
 				return -EINVAL;
 		} else {
