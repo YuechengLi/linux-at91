@@ -18,6 +18,28 @@
 
 	ahb {
 		apb {
+			aic: interrupt-controller@fffff000 {
+				tcb1_irq_mux: irq-mux@27 {
+					compatible = "atmel,aic-mux";
+					reg = <27>;
+
+					tc3_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb1 0 0x28 0xff>;
+					};
+
+					tc4_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb1 0 0x68 0xff>;
+					};
+
+					tc5_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb1 0 0xa8 0xff>;
+					};
+				};
+			};
+
 			pmc: pmc@fffffc00 {
 				periphck {
 					tcb1_clk: tcb1_clk {

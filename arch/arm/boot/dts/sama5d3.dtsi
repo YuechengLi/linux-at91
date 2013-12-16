@@ -390,6 +390,44 @@
 				interrupt-controller;
 				reg = <0xfffff000 0x200>;
 				atmel,external-irqs = <47>;
+				#address-cells = <1>;
+				#size-cells = <0>;
+				atmel,aic-irq-mapping = <0xffffffff 0x7ffff>;
+
+				sysc_irq_mux: irq-mux@1 {
+					compatible = "atmel,aic-mux";
+					reg = <1>;
+
+					pmc_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&pmc 0 0x64 0x5074b>;
+					};
+
+					rtc_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&rtc 0 0x24 0x1f>;
+					};
+				};
+
+				tcb0_irq_mux: irq-mux@26 {
+					compatible = "atmel,aic-mux";
+					reg = <26>;
+
+					tc0_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb0 0 0x28 0xff>;
+					};
+
+					tc1_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb0 0 0x68 0xff>;
+					};
+
+					tc2_irq {
+						compatible = "atmel,aic-mux-3reg-irq";
+						atmel,aic-mux-irq-reg = <&tcb0 0 0xa8 0xff>;
+					};
+				};
 			};
 
 			pinctrl@fffff200 {
@@ -1061,7 +1099,7 @@
 				status = "disabled";
 			};
 
-			rtc@fffffeb0 {
+			rtc: rtc@fffffeb0 {
 				compatible = "atmel,at91rm9200-rtc";
 				reg = <0xfffffeb0 0x30>;
 				interrupts = <1 IRQ_TYPE_LEVEL_HIGH 7>;
