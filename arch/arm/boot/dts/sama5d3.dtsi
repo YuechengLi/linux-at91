@@ -336,6 +336,8 @@
 				compatible = "atmel,sam9g46-sha";
 				reg = <0xf8034000 0x100>;
 				interrupts = <42 IRQ_TYPE_LEVEL_HIGH 0>;
+				clocks = <&sha_clk>;
+				clock-names = "sha_clk";
 			};
 
 			aes@f8038000 {
