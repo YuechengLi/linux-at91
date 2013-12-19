@@ -352,6 +352,8 @@
 				compatible = "atmel,sam9g46-tdes";
 				reg = <0xf803c000 0x100>;
 				interrupts = <44 IRQ_TYPE_LEVEL_HIGH 0>;
+				clocks = <&tdes_clk>;
+				clock-names = "tdes_clk";
 			};
 
 			dma0: dma-controller@ffffe600 {
