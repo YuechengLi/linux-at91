@@ -344,6 +344,8 @@
 				compatible = "atmel,sam9g46-aes";
 				reg = <0xf8038000 0x100>;
 				interrupts = <43 4 0>;
+				clocks = <&aes_clk>;
+				clock-names = "aes_clk";
 			};
 
 			tdes@f803c000 {
