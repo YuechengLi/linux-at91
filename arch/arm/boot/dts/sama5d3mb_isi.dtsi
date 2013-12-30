@@ -19,11 +19,6 @@
 		};
 	};
 
-	/* As sound depends on i2c0, we disable sound as well */
-	sound {
-		status = "disabled";
-	};
-
 	leds {
 		d3 {
 			/* Conflict with ISI module's reset pin */
