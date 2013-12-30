@@ -38,11 +38,18 @@
 			};
 
 			/*
-			 * i2c0 conflicts with ISI:
+			 * i2c0 conflicts with ISI before revD:
 			 * disable it to allow the use of ISI
 			 * can not enable audio when i2c0 disabled
 			 */
 			i2c0: i2c@f0014000 {
+				wm8904_before_revD: wm8904@1a {
+					compatible = "wm8904";
+					reg = <0x1a>;
+				};
+			};
+
+			i2c1: i2c@f0018000 {
 				wm8904: wm8904@1a {
 					compatible = "wm8904";
 					reg = <0x1a>;
@@ -168,5 +175,6 @@
 
 		atmel,ssc-controller = <&ssc0>;
 		atmel,audio-codec = <&wm8904>;
+		atmel,audio-codec-before-revD = <&wm8904_before_revD>;
 	};
 };
