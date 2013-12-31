@@ -55,4 +55,4 @@
 };
 
 /* Uncomment following line will enable ISI support */
-/* /include/ "sama5d3mb_isi.dtsi" */
+/include/ "sama5d3mb_isi.dtsi"
