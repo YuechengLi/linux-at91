@@ -55,6 +55,7 @@ static irqreturn_t clk_programmable_irq_handler(int irq, void *dev_id)
 	struct clk_programmable *prog = (struct clk_programmable *)dev_id;
 
 	wake_up(&prog->wait);
+	disable_irq_nosync(prog->irq);
 
 	return IRQ_HANDLED;
 }
@@ -74,8 +75,10 @@ static int clk_programmable_prepare(struct clk_hw *hw)
 
 	pmc_write(pmc, AT91_PMC_PCKR(id), tmp);
 
-	while (!(pmc_read(pmc, AT91_PMC_SR) & mask))
+	while (!(pmc_read(pmc, AT91_PMC_SR) & mask)) {
+		enable_irq(prog->irq);
 		wait_event(prog->wait, pmc_read(pmc, AT91_PMC_SR) & mask);
+	}
 
 	return 0;
 }
