@@ -170,25 +170,31 @@ static int atmel_asoc_wm8904_probe(struct platform_device *pdev)
 		return ret;
 	}
 
-	mclk = clk_get(NULL, "pck0");
+	if (IS_ENABLED(CONFIG_COMMON_CLK))
+		mclk = clk_get(card->dev, "pck0");
+	else
+		mclk = clk_get(NULL, "pck0");
+
 	if (IS_ERR(mclk)) {
 		dev_err(&pdev->dev, "failed to get pck0\n");
 		ret = PTR_ERR(mclk);
 		goto err_set_audio;
 	}
 
-	clk_src = clk_get(NULL, "clk32k");
-	if (IS_ERR(clk_src)) {
-		dev_err(&pdev->dev, "failed to get clk32k\n");
-		ret = PTR_ERR(clk_src);
-		goto err_set_audio;
-	}
+	if (!IS_ENABLED(CONFIG_COMMON_CLK)) {
+		clk_src = clk_get(NULL, "clk32k");
+		if (IS_ERR(clk_src)) {
+			dev_err(&pdev->dev, "failed to get clk32k\n");
+			ret = PTR_ERR(clk_src);
+			goto err_set_audio;
+		}
 
-	ret = clk_set_parent(mclk, clk_src);
-	clk_put(clk_src);
-	if (ret != 0) {
-		dev_err(&pdev->dev, "failed to set MCLK parent\n");
-		goto err_set_audio;
+		ret = clk_set_parent(mclk, clk_src);
+		clk_put(clk_src);
+		if (ret != 0) {
+			dev_err(&pdev->dev, "failed to set MCLK parent\n");
+			goto err_set_audio;
+		}
 	}
 
 	dev_info(&pdev->dev, "setting pck0 to %dHz\n", MCLK_RATE);
