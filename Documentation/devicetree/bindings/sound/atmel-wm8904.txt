@@ -3,6 +3,8 @@ Atmel ASoC driver with wm8904 audio codec complex
 Required properties:
   - compatible: "atmel,asoc-wm8904"
   - atmel,model: The user-visible name of this sound complex.
+  - clocks: A list of clocks needed by the wm8904 chip.
+  - clock-output-names: Driver related clock names. Shall contain "pck0".
   - atmel,audio-routing: A list of the connections between audio components.
     Each entry is a pair of strings, the first being the connection's sink,
     the second being the connection's source. Valid names for sources and
