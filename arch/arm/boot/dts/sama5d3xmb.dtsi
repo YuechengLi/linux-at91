@@ -163,6 +163,8 @@
 		compatible = "atmel,asoc-wm8904";
 		pinctrl-names = "default";
 		pinctrl-0 = <&pinctrl_pck0_as_audio_mck>;
+		clocks = <&pck0>;
+		clock-names = "pck0";
 
 		atmel,model = "wm8904 @ SAMA5D3EK";
 		atmel,audio-routing =
