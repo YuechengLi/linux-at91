@@ -235,7 +235,8 @@ enum atc_status {
  *             the cyclic list on suspend/resume cycle
  * @remain_desc: to save remain desc length
  * @dma_sconfig: configuration for slave transfers, passed via DMA_SLAVE_CONFIG
- * @lock: serializes enqueue/dequeue operations to descriptors lists
+ * @lock: serializes enqueue/dequeue operations to descriptors lists and
+ *        hardware accesses
  * @active_list: list of descriptors dmaengine is being running on
  * @queue: list of descriptors ready to be submitted to engine
  * @free_list: list of descriptors usable by the channel
