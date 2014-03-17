@@ -308,7 +308,6 @@
 							 AT91_PIOC 11 AT91_PERIPH_GPIO AT91_PINCTRL_OUTPUT0	/* PC11 GPIO output 0 */
 							 AT91_PIOC 10 AT91_PERIPH_GPIO AT91_PINCTRL_OUTPUT0	/* PC10 GPIO output 0 */
 							 AT91_PIOC 15 AT91_PERIPH_GPIO AT91_PINCTRL_OUTPUT0	/* PC15 GPIO output 0 */
-							 AT91_PIOE 27 AT91_PERIPH_GPIO AT91_PINCTRL_OUTPUT0	/* PE27 PIO output 0 */
 							 AT91_PIOE 28 AT91_PERIPH_GPIO AT91_PINCTRL_OUTPUT0>;	/* PE28 PIO output 0 */
 					};
 				};
@@ -460,5 +459,18 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 		regulator-always-on;
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pb_user1 {
+			label = "pb_user1";
+			gpios = <&pioE 27 GPIO_ACTIVE_HIGH>;
+			linux,code = <0x100>;
+			gpio-key,wakeup;
+		};
 	};
 };
