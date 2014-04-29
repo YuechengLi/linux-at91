@@ -247,9 +247,11 @@ static int atmel_lcdfb_check_var(struct fb_var_screeninfo *var,
 	if (var->yres > var->yres_virtual)
 		var->yres_virtual = var->yres;
 
+#ifndef CONFIG_ANDROID
 	/* Force same alignment for each line */
 	var->xres = (var->xres + 3) & ~3UL;
 	var->xres_virtual = (var->xres_virtual + 3) & ~3UL;
+#endif
 
 	var->red.msb_right = var->green.msb_right = var->blue.msb_right = 0;
 	var->transp.msb_right = 0;
