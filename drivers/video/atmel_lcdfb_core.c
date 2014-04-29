@@ -353,10 +353,6 @@ static int atmel_lcdfb_set_par(struct fb_info *info)
 	bits_per_line = info->var.xres_virtual * info->var.bits_per_pixel;
 	info->fix.line_length = DIV_ROUND_UP(bits_per_line, 8);
 
-	/* Re-initialize the DMA engine... */
-	dev_dbg(info->device, "  * update DMA engine\n");
-	sinfo->dev_data->update_dma(info, &info->var);
-
 	/* Now, the LCDC core... */
 	sinfo->dev_data->setup_core(info);
 
@@ -459,10 +455,40 @@ static int atmel_lcdfb_pan_display(struct fb_var_screeninfo *var,
 			       struct fb_info *info)
 {
 	struct atmel_lcdfb_info *sinfo = info->par;
+ #ifdef CONFIG_ANDROID
+	unsigned long dma_addr;
+	struct atmel_hlcd_dma_desc *desc;
+	struct fb_fix_screeninfo *fix = &info->fix;
+	int ret;
+#endif
 
 	dev_dbg(info->device, "%s\n", __func__);
 
+#ifdef CONFIG_ANDROID
+	dma_addr = (fix->smem_start + var->yoffset * fix->line_length
+			+ var->xoffset * var->bits_per_pixel / 8);
+
+	dma_addr &= ~3UL;
+	/* Setup the DMA descriptor, this descriptor will loop to itself */
+	desc = sinfo->dma_desc;
+
+	desc->address = dma_addr;
+	/* Disable DMA transfer interrupt & descriptor loaded interrupt. */
+	desc->next = sinfo->dma_desc_phys;
+
+	if (!strncmp(info->fix.id, "atmel_hlcdfb_bas", 16)) {
+		INIT_COMPLETION(sinfo->frame_completion);
+		ret = wait_for_completion_interruptible_timeout(&sinfo->frame_completion,
+                        msecs_to_jiffies(1000 / 24));
+		/* 24 frame per second is the lowest limit of the human eye,
+		(1000/24)ms is the maximum delay time */
+		if(ret == 0)
+			dev_err(info->device, "no vsync detected\n");
+	}
+	
+#else
 	sinfo->dev_data->update_dma(info, var);
+#endif
 
 	return 0;
 }
@@ -620,8 +646,10 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 		goto put_bus_clk;
 	}
 
-	if ((!id) || (id && !strcmp(id->name, "atmel_hlcdfb_base")))
+	if ((!id) || (id && !strcmp(id->name, "atmel_hlcdfb_base"))) {
 		atmel_lcdfb_start_clock(sinfo);
+		init_completion(&sinfo->frame_completion);
+	}
 
 	ret = fb_find_mode(&info->var, info, NULL, info->monspecs.modedb,
 			info->monspecs.modedb_len, info->monspecs.modedb,
@@ -757,6 +785,11 @@ int __atmel_lcdfb_probe(struct platform_device *pdev,
 		dev_err(dev, "failed to register framebuffer device: %d\n", ret);
 		goto reset_drvdata;
 	}
+
+	/* Initialize the DMA engine... */
+	dev_dbg(info->device, "  * Initialize DMA engine\n");
+	if (sinfo->dev_data->update_dma)
+		sinfo->dev_data->update_dma(info, &info->var);
 
 	/* add selected videomode to modelist */
 	fb_var_to_videomode(&fbmode, &info->var);

@@ -92,6 +92,13 @@ struct atmel_lcdfb_info {
 	void (*atmel_lcdfb_power_control)(int on);
 	struct fb_monspecs	*default_monspecs;
 	u32			pseudo_palette[16];
+	struct completion	frame_completion;
+};
+
+struct atmel_hlcd_dma_desc {
+	u32	address;
+	u32	control;
+	u32	next;
 };
 
 #define lcdc_readl(sinfo, reg)		__raw_readl((sinfo)->mmio+(reg))
