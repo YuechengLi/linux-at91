@@ -36,6 +36,8 @@
 
 #define ATMEL_LCDC_STOP_NOWAIT (1 << 0)
 
+#define ATMEL_LCDFB_SET_VSYNC_INT         _IOW ('F', 206, unsigned int)
+
 struct atmel_lcdfb_info;
 
 struct atmel_lcdfb_devdata {
@@ -56,6 +58,24 @@ extern void atmel_lcdfb_stop_clock(struct atmel_lcdfb_info *sinfo);
 extern int __atmel_lcdfb_probe(struct platform_device *pdev,
 				struct atmel_lcdfb_devdata *devdata);
 extern int __atmel_lcdfb_remove(struct platform_device *pdev);
+
+ /**
+  * struct atmel_fb_vsync - vsync information
+  * @wait:		 a queue for processes waiting for vsync
+  * @timestamp: 	 the time of the last vsync interrupt
+  * @active:	 whether userspace is requesting vsync notifications
+  * @irq_refcount:	 reference count for the underlying irq
+  * @irq_lock:		 mutex protecting the irq refcount and register
+  * @thread:	 notification-generating thread
+  */
+ struct atmel_fb_vsync {
+	 wait_queue_head_t	 wait;
+	 ktime_t		 timestamp;
+	 bool			 active;
+	 int		 irq_refcount;
+	 struct mutex		 irq_lock;
+	 struct task_struct  *thread;
+ };
 
  /* LCD Controller info data structure, stored in device platform_data */
 struct atmel_lcdfb_info {
@@ -91,6 +111,7 @@ struct atmel_lcdfb_info {
 	unsigned int		default_dmacon;
 	void (*atmel_lcdfb_power_control)(int on);
 	struct fb_monspecs	*default_monspecs;
+	struct atmel_fb_vsync	 vsync_info;
 	u32			pseudo_palette[16];
 	struct completion	frame_completion;
 };

@@ -321,6 +321,12 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDIER, LCDC_LCDIER_FIFOERRIE |
 				LCDC_LCDIER_BASEIE | LCDC_LCDIER_HEOIE);
 
+	mutex_lock(&sinfo->vsync_info.irq_lock);
+	if (sinfo->vsync_info.irq_refcount) {
+		lcdc_writel(sinfo, ATMEL_LCDC_LCDIER, LCDC_LCDIER_SOFIE);
+	}
+	mutex_unlock(&sinfo->vsync_info.irq_lock);
+
 	return 0;
 }
 
@@ -395,6 +401,8 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 	struct atmel_lcdfb_info *sinfo = info->par;
 	u32 status, baselayer_status;
 
+	ktime_t timestamp = ktime_get();
+
 	/* Check for error status via interrupt.*/
 	status = lcdc_readl(sinfo, ATMEL_LCDC_LCDISR);
 	if (status & LCDC_LCDISR_HEO)
@@ -402,6 +410,11 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 
 	if (status & LCDC_LCDISR_FIFOERR)
 		dev_warn(info->device, "FIFO underflow %#x\n", status);
+
+	if (status & LCDC_LCDISR_SOF & lcdc_readl(sinfo, ATMEL_LCDC_LCDIMR)) {
+		sinfo->vsync_info.timestamp = timestamp;
+		wake_up_interruptible_all(&sinfo->vsync_info.wait);
+	}
 
 	if (status & LCDC_LCDISR_BASE) {
 		/* Check base layer's overflow error. */
