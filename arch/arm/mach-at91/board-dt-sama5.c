@@ -69,9 +69,9 @@ static struct fb_videomode at91_tft_vga_modes[] = {
 		.name		= "LG",
 		.refresh	= 60,
 		.xres		= 800,		.yres		= 480,
-		.pixclock	= KHZ2PICOS(33260),
+		.pixclock	= KHZ2PICOS(44340),
 
-		.left_margin	= 88,		.right_margin	= 168,
+		.left_margin	= 88,		.right_margin	= 520,
 		.upper_margin	= 8,		.lower_margin	= 37,
 		.hsync_len	= 128,		.vsync_len	= 2,
 
@@ -449,6 +449,7 @@ static void __init sama5_dt_device_init(void)
 
 		/* set LCD configuration */
 		at91_tft_vga_modes[0].name = "PALM";
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(33260);
 		at91_tft_vga_modes[0].left_margin = 128;
 		at91_tft_vga_modes[0].right_margin = 0;
 		at91_tft_vga_modes[0].upper_margin = 23;
@@ -471,9 +472,9 @@ static void __init sama5_dt_device_init(void)
 		at91_tft_vga_modes[0].name = "Inlx";
 		at91_tft_vga_modes[0].xres = 480;
 		at91_tft_vga_modes[0].yres = 272;
-		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9000);
+		at91_tft_vga_modes[0].pixclock = KHZ2PICOS(9500);
 		at91_tft_vga_modes[0].left_margin = 2;
-		at91_tft_vga_modes[0].right_margin = 2;
+		at91_tft_vga_modes[0].right_margin = 37;
 		at91_tft_vga_modes[0].upper_margin = 2;
 		at91_tft_vga_modes[0].lower_margin = 2;
 		at91_tft_vga_modes[0].hsync_len = 41;
