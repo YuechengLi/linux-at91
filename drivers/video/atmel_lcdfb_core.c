@@ -220,14 +220,19 @@ static int atmel_lcdfb_check_var(struct fb_var_screeninfo *var,
 	var->red.msb_right = var->green.msb_right = var->blue.msb_right = 0;
 	var->transp.msb_right = 0;
 	var->transp.offset = var->transp.length = 0;
-	var->xoffset = var->yoffset = 0;
 
 	if (info->fix.smem_len) {
 		unsigned int smem_len = (var->xres_virtual * var->yres_virtual
 					 * ((var->bits_per_pixel + 7) / 8));
 		if (smem_len > info->fix.smem_len) {
-			dev_err(dev, "not enough memory for this mode\n");
-			return -EINVAL;
+			sinfo->smem_len = smem_len;
+			atmel_lcdfb_free_video_memory(sinfo);
+			if (atmel_lcdfb_alloc_video_memory(sinfo)) {
+				dev_err(dev, "not enough memory for this mode\n");
+				return -EINVAL;
+			}
+			if (sinfo->dev_data->update_dma)
+				sinfo->dev_data->update_dma(info, &info->var);
 		}
 	}
 
