@@ -8,12 +8,16 @@
  * published by the Free Software Foundation.
  */
 
+#ifndef _AT91_GENERIC_H
+#define _AT91_GENERIC_H
+
 #include <linux/clkdev.h>
 #include <linux/of.h>
 #include <linux/reboot.h>
 
  /* Map io */
 extern void __init at91_map_io(void);
+extern void __init at91_alt_map_io(void);
 extern void __init at91_init_sram(int bank, unsigned long base,
 				  unsigned int length);
 
@@ -41,10 +45,11 @@ extern void __init at91_sysirq_mask_rtt(u32 rtt_base);
 extern void __init at91_register_devices(void);
 
  /* Timer */
+extern void __init at91_init_time(void);
 extern void at91rm9200_ioremap_st(u32 addr);
 extern void at91rm9200_timer_init(void);
 extern void at91sam926x_ioremap_pit(u32 addr);
-extern void at91sam926x_pit_init(void);
+extern void at91sam926x_pit_init(int irq);
 extern void at91x40_timer_init(void);
 
  /* Clocks */
@@ -84,3 +89,5 @@ extern int  __init at91_gpio_of_irq_setup(struct device_node *node,
 					  struct device_node *parent);
 
 extern u32 at91_get_extern_irq(void);
+
+#endif /* _AT91_GENERIC_H */
