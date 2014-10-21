@@ -31,12 +31,6 @@
 
 #define ATMEL_LCDC_CVAL_DEFAULT         0xc8
 
-struct atmel_hlcd_dma_desc {
-	u32	address;
-	u32	control;
-	u32	next;
-};
-
 static void atmel_hlcdfb_update_dma_base(struct fb_info *info,
 
 			       struct fb_var_screeninfo *var)
@@ -55,9 +49,9 @@ static void atmel_hlcdfb_update_dma_base(struct fb_info *info,
 	desc = sinfo->dma_desc;
 
 	desc->address = dma_addr;
-	/* Disable DMA transfer interrupt & descriptor loaded interrupt. */
+	/* Enable DMA transfer interrupt & Disable descriptor loaded interrupt. */
 	desc->control = LCDC_BASECTRL_ADDIEN | LCDC_BASECTRL_DSCRIEN
-			| LCDC_BASECTRL_DMAIEN | LCDC_BASECTRL_DFETCH;
+			| LCDC_BASECTRL_DFETCH;
 	desc->next = sinfo->dma_desc_phys;
 
 	lcdc_writel(sinfo, ATMEL_LCDC_BASEADDR, dma_addr);
@@ -311,7 +305,8 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	dev_dbg(info->device, "  * LCDC_LCDCFG4 = %08lx\n", value);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDCFG4, value);
 
-	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG0, LCDC_BASECFG0_BLEN_AHB_INCR16 | LCDC_BASECFG0_DLBO);
+	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG0, LCDC_OVRCFG0_SIF
+			| LCDC_BASECFG0_BLEN_AHB_INCR16 | LCDC_BASECFG0_DLBO);
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG1, atmel_hlcdfb_get_rgbmode(info));
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG2, 0);
 	lcdc_writel(sinfo, ATMEL_LCDC_BASECFG3, 0);	/* Default color */
@@ -321,10 +316,17 @@ static int atmel_hlcdfb_setup_core_base(struct fb_info *info)
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDIDR, ~0UL);
 	lcdc_writel(sinfo, ATMEL_LCDC_BASEIDR, ~0UL);
 	/* Enable BASE LAYER overflow interrupts, if want to enable DMA interrupt, also need set it at LCDC_BASECTRL reg */
-	lcdc_writel(sinfo, ATMEL_LCDC_BASEIER, LCDC_BASEIER_OVR);
+	lcdc_writel(sinfo, ATMEL_LCDC_BASEIER, LCDC_BASEIER_OVR
+		| LCDC_BASEISR_DMA);
 	//FIXME: Let video-driver register a callback
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDIER, LCDC_LCDIER_FIFOERRIE |
 				LCDC_LCDIER_BASEIE | LCDC_LCDIER_HEOIE);
+
+	mutex_lock(&sinfo->vsync_info.irq_lock);
+	if (sinfo->vsync_info.irq_refcount) {
+		lcdc_writel(sinfo, ATMEL_LCDC_LCDIER, LCDC_LCDIER_SOFIE);
+	}
+	mutex_unlock(&sinfo->vsync_info.irq_lock);
 
 	return 0;
 }
@@ -360,6 +362,10 @@ static int atmel_hlcdfb_setup_core_ovl(struct fb_info *info)
 			(yres << LCDC_OVRCFG3_YSIZE_OFFSET));
 	lcdc_writel(sinfo, ATMEL_LCDC_OVRCFG9, cfg9);
 
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRIDR, ~0UL);
+
+	lcdc_writel(sinfo, ATMEL_LCDC_OVRCHER, LCDC_OVRCHER_CHEN
+					| LCDC_OVRCHER_UPDATEEN);
 	return 0;
 }
 static void atmelfb_limit_screeninfo(struct fb_var_screeninfo *var)
@@ -396,6 +402,8 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 	struct atmel_lcdfb_info *sinfo = info->par;
 	u32 status, baselayer_status;
 
+	ktime_t timestamp = ktime_get();
+
 	/* Check for error status via interrupt.*/
 	status = lcdc_readl(sinfo, ATMEL_LCDC_LCDISR);
 	if (status & LCDC_LCDISR_HEO)
@@ -404,6 +412,11 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 	if (status & LCDC_LCDISR_FIFOERR)
 		dev_warn(info->device, "FIFO underflow %#x\n", status);
 
+	if (status & LCDC_LCDISR_SOF & lcdc_readl(sinfo, ATMEL_LCDC_LCDIMR)) {
+		sinfo->vsync_info.timestamp = timestamp;
+		wake_up_interruptible_all(&sinfo->vsync_info.wait);
+	}
+
 	if (status & LCDC_LCDISR_BASE) {
 		/* Check base layer's overflow error. */
 		baselayer_status = lcdc_readl(sinfo, ATMEL_LCDC_BASEISR);
@@ -411,6 +424,9 @@ static irqreturn_t atmel_hlcdfb_interrupt(int irq, void *dev_id)
 		if (baselayer_status & LCDC_BASEISR_OVR)
 			dev_warn(info->device, "base layer overflow %#x\n",
 						baselayer_status);
+		else if (baselayer_status & LCDC_BASEISR_DMA) {
+			complete(&sinfo->frame_completion);
+		}
 	}
 
 	return IRQ_HANDLED;
@@ -459,7 +475,8 @@ static int atmel_hlcdfb_resume(struct platform_device *pdev)
 		sinfo->atmel_lcdfb_power_control(1);
 
 	/* Enable fifo error & BASE LAYER overflow interrupts */
-	lcdc_writel(sinfo, ATMEL_LCDC_BASEIER, LCDC_BASEIER_OVR);
+	lcdc_writel(sinfo, ATMEL_LCDC_BASEIER, LCDC_BASEIER_OVR
+					| LCDC_BASEIER_DMA);
 	lcdc_writel(sinfo, ATMEL_LCDC_LCDIER, LCDC_LCDIER_FIFOERRIE |
 				LCDC_LCDIER_BASEIE | LCDC_LCDIER_HEOIE);
 
