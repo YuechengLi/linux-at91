@@ -36,7 +36,9 @@
 
 #ifdef CONFIG_AVR32
 #include <mach/cpu.h>
+#warn autobuild avr32
 #else
+#warn autobuild at91
 #define cpu_is_at32ap7000() (0)
 #endif
 
