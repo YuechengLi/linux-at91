@@ -163,7 +163,11 @@ static int at91_pm_enter(suspend_state_t state)
 			 */
 			if (cpu_is_at91rm9200())
 				memctrl = AT91_MEMCTRL_MC;
-			else if (cpu_is_at91sam9g45())
+			else if (cpu_is_at91sam9g45()
+				|| cpu_is_at91sam9x5()
+				|| cpu_is_at91sam9n12()
+				|| cpu_is_sama5d3()
+				|| cpu_is_sama5d4())
 				memctrl = AT91_MEMCTRL_DDRSDR;
 
 			at91_suspend_sram_fn(at91_pmc_base, at91_ramc_base[0],
