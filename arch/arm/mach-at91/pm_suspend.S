@@ -75,6 +75,58 @@ tmp2	.req	r5
 	beq	1b
 	.endm
 
+/*
+ * Put the processor to enter the WFI state
+ */
+	.macro _do_wfi
+
+#if defined(CONFIG_CPU_V7)
+	/*
+	 * Execute an ISB instruction to flush the pipeline to ensure
+	 * that all of operations have beem completed.
+	 */
+	isb
+
+	/*
+	 * Execute an ISB instruction to ensure that all of the
+	 * CP15 register changes have been committed.
+	 */
+	dsb
+	dmb
+
+	/* Disable the processor's clock */
+	mov	tmp1, #AT91_PMC_PCK
+	str	tmp1, [pmc, #AT91_PMC_SCDR]
+
+	/* Execute a WFI instruction */
+	wfi	@ Wait For Interrupt
+
+	/*
+	 * CPU can specualatively prefetch the instructions
+	 * so add NOPs after WFI. Sixteen NOPs as Cortex-A5 pipeline.
+	 */
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
+#else
+	mcr	p15, 0, tmp1, c7, c0, 4
+#endif
+
+	.endm
+
 	.text
 
 /*
@@ -177,7 +229,7 @@ sdr_sr_done:
 	str	tmp1, [pmc, #AT91_CKGR_MOR]
 
 	/* Wait for interrupt */
-	mcr	p15, 0, tmp1, c7, c0, 4
+	_do_wfi
 
 	/* Turn on the main oscillator */
 	ldr	tmp1, [pmc, #AT91_CKGR_MOR]
