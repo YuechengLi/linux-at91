@@ -67,6 +67,30 @@ static int at91_pm_begin(suspend_state_t state)
 	return 0;
 }
 
+static int at91_disable_utmi_pll(void)
+{
+	u32 reg;
+
+	if (at91_pmc_read(AT91_CKGR_UCKR) & AT91_PMC_UPLLEN) {
+		reg = at91_pmc_read(AT91_CKGR_UCKR);
+		reg &= ~AT91_PMC_UPLLEN;
+		at91_pmc_write(AT91_CKGR_UCKR, reg);
+
+		return 1;
+	}
+
+	return 0;
+}
+
+static void at91_enable_utmi_pll(void)
+{
+	u32 reg;
+
+	reg = at91_pmc_read(AT91_CKGR_UCKR);
+	reg |= AT91_PMC_UPLLEN;
+	at91_pmc_write(AT91_CKGR_UCKR, reg);
+}
+
 /*
  * Verify that all the clocks are correct before entering
  * slow-clock mode.
@@ -141,7 +165,12 @@ static int at91_pm_enter(suspend_state_t state)
 {
 	int memctrl = AT91_MEMCTRL_SDRAMC;
 
+	int utmi_pll;
+
 	at91_pinctrl_gpio_suspend();
+
+	/* Workaround: try to disable UTMI PLL */
+	utmi_pll = at91_disable_utmi_pll();
 
 	switch (state) {
 		/*
@@ -210,6 +239,9 @@ static int at91_pm_enter(suspend_state_t state)
 
 error:
 	target_state = PM_SUSPEND_ON;
+
+	if (utmi_pll)
+		at91_enable_utmi_pll();
 
 	at91_pinctrl_gpio_resume();
 	return 0;
