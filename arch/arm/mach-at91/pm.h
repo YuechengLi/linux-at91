@@ -111,4 +111,6 @@ static inline void at91sam9_sdram_standby(void)
 		at91_ramc_write(1, AT91_SDRAMC_LPR, saved_lpr1);
 }
 
+void __weak sama5_disable_cache(void) {}
+void __weak sama5_enable_cache(void) {}
 #endif
