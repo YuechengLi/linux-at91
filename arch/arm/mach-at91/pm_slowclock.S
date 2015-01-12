@@ -11,12 +11,10 @@
  * published by the Free Software Foundation.
  *
  */
-
 #include <linux/linkage.h>
 #include <linux/clk/at91_pmc.h>
 #include <mach/hardware.h>
 #include <mach/at91_ramc.h>
-
 
 #ifdef CONFIG_SOC_AT91SAM9263
 /*
@@ -34,6 +32,15 @@
  */
 #undef SLOWDOWN_MASTER_CLOCK
 
+/*
+ * Register Usages:
+ *  R0 = Base address of AT91_PMC
+ *  R1 = Base address of RAM Controller (SDRAM, DDRSDR, or AT91_SYS)
+ *  R2 = Base address of second RAM Controller or 0 if not present
+ *  R3 = Memory controller info
+ *  R4 = temporary register
+ *  R5 = temporary register2
+*/
 pmc	.req	r0
 sdramc	.req	r1
 ramc1	.req	r2
@@ -70,22 +77,13 @@ tmp2	.req	r5
 
 	.text
 
-/* void at91_slow_clock(void __iomem *pmc, void __iomem *sdramc,
+/*
+ * void at91_slow_clock(void __iomem *pmc, void __iomem *sdramc,
  *			void __iomem *ramc1, int memctrl)
  */
 ENTRY(at91_slow_clock)
 	/* Save registers on stack */
 	stmfd	sp!, {r4 - r12, lr}
-
-	/*
-	 * Register usage:
-	 *  R0 = Base address of AT91_PMC
-	 *  R1 = Base address of RAM Controller (SDRAM, DDRSDR, or AT91_SYS)
-	 *  R2 = Base address of second RAM Controller or 0 if not present
-	 *  R3 = Memory controller
-	 *  R4 = temporary register
-	 *  R5 = temporary register
-	 */
 
 	/* Drain write buffer */
 	mov	tmp1, #0
@@ -109,13 +107,13 @@ ddr_sr_enable:
 	cmp	memctrl, #AT91_MEMCTRL_DDRSDR
 	bne	sdr_sr_enable
 
-	/* prepare for DDRAM self-refresh mode */
+	/* Prepare for DDRAM self-refresh mode */
 	ldr	tmp1, [sdramc, #AT91_DDRSDRC_LPR]
 	str	tmp1, .saved_sam9_lpr
 	bic	tmp1, #AT91_DDRSDRC_LPCB
 	orr	tmp1, #AT91_DDRSDRC_LPCB_SELF_REFRESH
 
-	/* figure out if we use the second ram controller */
+	/* Figure out if we use the second ram controller */
 	cmp	ramc1, #0
 	ldrne	tmp2, [ramc1, #AT91_DDRSDRC_LPR]
 	strne	tmp2, .saved_sam9_lpr1
