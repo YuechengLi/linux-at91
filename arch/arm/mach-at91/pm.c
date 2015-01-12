@@ -20,17 +20,25 @@
 #include <linux/platform_device.h>
 #include <linux/io.h>
 #include <linux/clk/at91_pmc.h>
+#include <linux/genalloc.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
 
 #include <asm/irq.h>
 #include <linux/atomic.h>
 #include <asm/mach/time.h>
 #include <asm/mach/irq.h>
+#include <asm/fncpy.h>
 
 #include <mach/cpu.h>
 #include <mach/hardware.h>
 
 #include "generic.h"
 #include "pm.h"
+
+static void (*at91_suspend_sram_fn)(void __iomem *pmc, void __iomem *ramc0,
+					 void __iomem *ramc1, int memctrl);
 
 static void (*at91_pm_standby)(void);
 
@@ -129,16 +137,10 @@ int at91_suspend_entering_slow_clock(void)
 }
 EXPORT_SYMBOL(at91_suspend_entering_slow_clock);
 
-
-static void (*slow_clock)(void __iomem *pmc, void __iomem *ramc0,
-			  void __iomem *ramc1, int memctrl);
-
-extern void at91_pm_suspend_in_sram(void __iomem *pmc, void __iomem *ramc0,
-					void __iomem *ramc1, int memctrl);
-extern u32 at91_pm_suspend_in_sram_sz;
-
 static int at91_pm_enter(suspend_state_t state)
 {
+	int memctrl = AT91_MEMCTRL_SDRAMC;
+
 	at91_pinctrl_gpio_suspend();
 
 	switch (state) {
@@ -155,27 +157,19 @@ static int at91_pm_enter(suspend_state_t state)
 				goto error;
 
 			/*
-			 * Enter slow clock mode by switching over to clk32k and
-			 * turning off the main oscillator; reverse on wakeup.
+			 * Jump to the internal SRAM, the master clock
+			 * swithes to slow clock, turn off the main oscillator,
+			 * cpu enters into the WFI state, wait for wake up.
 			 */
-			if (slow_clock) {
-				int memctrl = AT91_MEMCTRL_SDRAMC;
+			if (cpu_is_at91rm9200())
+				memctrl = AT91_MEMCTRL_MC;
+			else if (cpu_is_at91sam9g45())
+				memctrl = AT91_MEMCTRL_DDRSDR;
 
-				if (cpu_is_at91rm9200())
-					memctrl = AT91_MEMCTRL_MC;
-				else if (cpu_is_at91sam9g45())
-					memctrl = AT91_MEMCTRL_DDRSDR;
+			at91_suspend_sram_fn(at91_pmc_base, at91_ramc_base[0],
+						at91_ramc_base[1], memctrl);
 
-				/* copy slow_clock handler to SRAM, and call it */
-				memcpy(slow_clock, at91_pm_suspend_in_sram, at91_slow_clock_sz);
-
-				slow_clock(at91_pmc_base, at91_ramc_base[0],
-					   at91_ramc_base[1], memctrl);
-				break;
-			} else {
-				pr_info("AT91: PM - no slow clock mode enabled ...\n");
-				/* FALLTHROUGH leaving master clock alone */
-			}
+			break;
 
 		/*
 		 * STANDBY mode has *all* drivers suspended; ignores irqs not
@@ -239,12 +233,69 @@ void at91_pm_set_standby(void (*at91_standby)(void))
 	}
 }
 
+#define	SUSPEND_SRAM_SIZE	0x10000
+
+extern void at91_pm_suspend_in_sram(void __iomem *pmc, void __iomem *ramc0,
+					void __iomem *ramc1, int memctrl);
+extern u32 at91_pm_suspend_in_sram_sz;
+
+static void __iomem *suspend_sram_base;
+
+static int __init at91_suspend_init(void)
+{
+	phys_addr_t sram_pbase;
+	struct device_node *node;
+	struct platform_device *pdev;
+	struct gen_pool *sram_pool;
+	unsigned long sram_base;
+	int ret = 0;
+
+	node = of_find_compatible_node(NULL, NULL, "mmio-sram");
+	if (!node) {
+		pr_warn("%s: failed to find sram node!\n", __func__);
+		return -ENODEV;
+	}
+
+	pdev = of_find_device_by_node(node);
+	if (!pdev) {
+		pr_warn("%s: failed to find sram device!\n", __func__);
+		ret = -ENODEV;
+		goto put_node;
+	}
+
+	sram_pool = dev_get_gen_pool(&pdev->dev);
+	if (!sram_pool) {
+		pr_warn("%s: sram pool unavailable!\n", __func__);
+		ret = -ENODEV;
+		goto put_node;
+	}
+
+	sram_base = gen_pool_alloc(sram_pool, SUSPEND_SRAM_SIZE);
+	if (!sram_base) {
+		pr_warn("%s: unable to alloc sram!\n", __func__);
+		ret = -ENOMEM;
+		goto put_node;
+	}
+
+	sram_pbase = gen_pool_virt_to_phys(sram_pool, sram_base);
+
+	suspend_sram_base = __arm_ioremap_exec(sram_pbase,
+						SUSPEND_SRAM_SIZE, false);
+
+	at91_suspend_sram_fn = fncpy(suspend_sram_base,
+					&at91_pm_suspend_in_sram,
+					at91_pm_suspend_in_sram_sz);
+
+	suspend_set_ops(&at91_pm_ops);
+
+put_node:
+	of_node_put(node);
+
+	return ret;
+}
+
 static int __init at91_pm_init(void)
 {
-	slow_clock = (void *) (AT91_IO_VIRT_BASE - at91_slow_clock_sz);
-
-	pr_info("AT91: Power Management%s\n", (slow_clock ? " (with slow clock mode)" : ""));
-
 	/* AT91RM9200 SDRAM low-power mode cannot be used with self-refresh. */
 	if (cpu_is_at91rm9200())
 		at91_ramc_write(0, AT91RM9200_SDRAMC_LPR, 0);
@@ -252,7 +303,7 @@ static int __init at91_pm_init(void)
 	if (at91_cpuidle_device.dev.platform_data)
 		platform_device_register(&at91_cpuidle_device);
 
-	suspend_set_ops(&at91_pm_ops);
+	at91_suspend_init();
 
 	return 0;
 }
