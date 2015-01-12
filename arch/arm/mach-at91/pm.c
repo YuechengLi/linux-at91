@@ -121,11 +121,9 @@ EXPORT_SYMBOL(at91_suspend_entering_slow_clock);
 static void (*slow_clock)(void __iomem *pmc, void __iomem *ramc0,
 			  void __iomem *ramc1, int memctrl);
 
-#ifdef CONFIG_AT91_SLOW_CLOCK
 extern void at91_slow_clock(void __iomem *pmc, void __iomem *ramc0,
 			    void __iomem *ramc1, int memctrl);
 extern u32 at91_slow_clock_sz;
-#endif
 
 static int at91_pm_enter(suspend_state_t state)
 {
@@ -155,10 +153,10 @@ static int at91_pm_enter(suspend_state_t state)
 					memctrl = AT91_MEMCTRL_MC;
 				else if (cpu_is_at91sam9g45())
 					memctrl = AT91_MEMCTRL_DDRSDR;
-#ifdef CONFIG_AT91_SLOW_CLOCK
+
 				/* copy slow_clock handler to SRAM, and call it */
 				memcpy(slow_clock, at91_slow_clock, at91_slow_clock_sz);
-#endif
+
 				slow_clock(at91_pmc_base, at91_ramc_base[0],
 					   at91_ramc_base[1], memctrl);
 				break;
@@ -231,9 +229,7 @@ void at91_pm_set_standby(void (*at91_standby)(void))
 
 static int __init at91_pm_init(void)
 {
-#ifdef CONFIG_AT91_SLOW_CLOCK
 	slow_clock = (void *) (AT91_IO_VIRT_BASE - at91_slow_clock_sz);
-#endif
 
 	pr_info("AT91: Power Management%s\n", (slow_clock ? " (with slow clock mode)" : ""));
 
