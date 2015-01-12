@@ -170,8 +170,14 @@ static int at91_pm_enter(suspend_state_t state)
 				|| cpu_is_sama5d4())
 				memctrl = AT91_MEMCTRL_DDRSDR;
 
+			/* Disable the L1/L2 Cache */
+			sama5_disable_cache();
+
 			at91_suspend_sram_fn(at91_pmc_base, at91_ramc_base[0],
 						at91_ramc_base[1], memctrl);
+
+			sama5_enable_cache();
+			/* Enable the L1/L2 Cache */
 
 			break;
 
