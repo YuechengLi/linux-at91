@@ -54,6 +54,11 @@
 		interrupts = <46 IRQ_TYPE_LEVEL_HIGH 0>;
 	};
 
+	ocram: sram@00300000 {
+		compatible = "mmio-sram";
+		reg = <0x00300000 0x20000>;
+	};
+
 	memory {
 		reg = <0x20000000 0x8000000>;
 	};
