@@ -30,6 +30,7 @@ obj-$(CONFIG_PM)		+= pm.o
 obj-$(CONFIG_PM)		+= pm_suspend.o
 ifeq ($(CONFIG_CPU_V7), y)
 obj-$(CONFIG_PM)		+= pm_cache_sama5.o
+obj-$(CONFIG_PM)		+= pm_standby_sama5.o
 endif
 
 ifeq ($(CONFIG_PM_DEBUG),y)

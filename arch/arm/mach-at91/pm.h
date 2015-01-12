@@ -113,4 +113,5 @@ static inline void at91sam9_sdram_standby(void)
 
 void __weak sama5_disable_cache(void) {}
 void __weak sama5_enable_cache(void) {}
+void __weak sama5_ddr_standby(void) {}
 #endif
