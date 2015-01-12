@@ -133,9 +133,9 @@ EXPORT_SYMBOL(at91_suspend_entering_slow_clock);
 static void (*slow_clock)(void __iomem *pmc, void __iomem *ramc0,
 			  void __iomem *ramc1, int memctrl);
 
-extern void at91_slow_clock(void __iomem *pmc, void __iomem *ramc0,
-			    void __iomem *ramc1, int memctrl);
-extern u32 at91_slow_clock_sz;
+extern void at91_pm_suspend_in_sram(void __iomem *pmc, void __iomem *ramc0,
+					void __iomem *ramc1, int memctrl);
+extern u32 at91_pm_suspend_in_sram_sz;
 
 static int at91_pm_enter(suspend_state_t state)
 {
@@ -167,7 +167,7 @@ static int at91_pm_enter(suspend_state_t state)
 					memctrl = AT91_MEMCTRL_DDRSDR;
 
 				/* copy slow_clock handler to SRAM, and call it */
-				memcpy(slow_clock, at91_slow_clock, at91_slow_clock_sz);
+				memcpy(slow_clock, at91_pm_suspend_in_sram, at91_slow_clock_sz);
 
 				slow_clock(at91_pmc_base, at91_ramc_base[0],
 					   at91_ramc_base[1], memctrl);

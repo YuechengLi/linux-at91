@@ -78,10 +78,10 @@ tmp2	.req	r5
 	.text
 
 /*
- * void at91_slow_clock(void __iomem *pmc, void __iomem *sdramc,
- *			void __iomem *ramc1, int memctrl)
+ * void at91_pm_suspend_in_sram(void __iomem *pmc, void __iomem *sdramc,
+ *				void __iomem *ramc1, int memctrl)
  */
-ENTRY(at91_slow_clock)
+ENTRY(at91_pm_suspend_in_sram)
 	/* Save registers on stack */
 	stmfd	sp!, {r4 - r12, lr}
 
@@ -270,5 +270,5 @@ ram_restored:
 .saved_sam9_lpr1:
 	.word 0
 
-ENTRY(at91_slow_clock_sz)
-	.word .-at91_slow_clock
+ENTRY(at91_pm_suspend_in_sram_sz)
+	.word .-at91_pm_suspend_in_sram
