@@ -36,6 +36,17 @@
 #include <mach/sama5d4.h>
 
 /*
+ * User Peripheral physical base addresses.
+ */
+#define SAMA5D4_BASE_USART3	0xfc00c000 /* (USART3 non-secure) Base Address */
+#define SAMA5D4_BASE_PMC	0xf0018000 /* (PMC) Base Address */
+#define SAMA5D4_BASE_MPDDRC	0xf0010000 /* (MPDDRC) Base Address */
+#define SAMA5D4_BASE_PIOD	0xfc068000 /* (PIOD) Base Address */
+
+/* Some other peripherals */
+#define SAMA5D4_BASE_SYS2	SAMA5D4_BASE_PIOD
+
+/*
  * On all at91 except rm9200 and x40 have the System Controller starts
  * at address 0xffffc000 and has a size of 16KiB.
  *
