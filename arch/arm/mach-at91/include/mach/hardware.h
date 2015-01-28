@@ -24,6 +24,12 @@
 /* sama5d4 */
 #define AT91_BASE_DBGU2	0xfc069000
 
+/* DBGU register needed for chip identification */
+#define AT91_DBGU_CIDR		(0x40)	/* Chip ID Register */
+#define		AT91_CIDR_VERSION	(0x1f << 0)	/* Version of the Device */
+#define		AT91_CIDR_ARCH		(0xff << 20)	/* Architecture Identifier */
+#define		AT91_CIDR_EXT		(1    << 31)	/* Extension Flag */
+#define AT91_DBGU_EXID		(0x44)	/* Chip ID Extension Register */
 
 /*
  * User Peripheral physical base addresses.

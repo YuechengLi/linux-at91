@@ -20,7 +20,6 @@
 
 #include <mach/hardware.h>
 #include <mach/cpu.h>
-#include <mach/at91_dbgu.h>
 
 #include "generic.h"
 #include "pm.h"
