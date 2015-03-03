@@ -32,12 +32,6 @@
 #define	AT91_PM_IS_SAMA5D4(x)	(((x) & AT91_PM_SAMA5D4_MASK) << AT91_PM_SAMA5D4_OFFSET)
 #define	AT91_PM_SAMA5D4_BIT	0x01
 
-#ifdef CONFIG_PM
-extern void at91_pm_set_standby(void (*at91_standby)(void));
-#else
-static inline void at91_pm_set_standby(void (*at91_standby)(void)) { }
-#endif
-
 #ifndef __ASSEMBLY__
 /*
  * The AT91RM9200 goes into self-refresh mode with this command, and will
