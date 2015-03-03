@@ -86,7 +86,7 @@ static int at91_pm_verify_clocks(void)
 	/* USB must not be using PLLB */
 	if ((scsr & at91_pm_data.uhp_udp_mask) != 0) {
 		pr_err("AT91: PM - Suspend-to-RAM with USB still active\n");
-		return 0;
+		return 1;
 	}
 
 	/* PCK0..PCK3 must be disabled, or configured to use clk32k */
