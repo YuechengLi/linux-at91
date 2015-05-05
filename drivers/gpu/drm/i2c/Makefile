@@ -8,5 +8,7 @@ obj-$(CONFIG_DRM_I2C_SIL164) += sil164.o
 
 obj-$(CONFIG_DRM_I2C_SIL902X) += sil902x.o
 
+obj-$(CONFIG_SND_SOC_SIL9022) += encoder-sii9022-audio.o
+
 tda998x-y := tda998x_drv.o
 obj-$(CONFIG_DRM_I2C_NXP_TDA998X) += tda998x.o

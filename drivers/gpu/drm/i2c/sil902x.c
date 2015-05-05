@@ -10,6 +10,9 @@
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_encoder_slave.h>
+#include <video/omapdss.h>
+#include <video/omap-panel-data.h>
+#include "encoder-sii9022.h"
 
 #define SIL902X_TPI_VIDEO_DATA			0x0
 
@@ -58,16 +61,6 @@
 
 #define SIL902X_REG_TPI_RQB			0xc7
 
-struct sil902x {
-	struct i2c_client *i2c;
-	struct regmap *regmap;
-	struct drm_encoder encoder;
-	struct drm_connector connector;
-	int reset_gpio;
-	bool reset_active_low;
-	enum of_gpio_flags reset_gpio_flags;
-	struct work_struct hotplug_work;
-};
 
 static inline struct sil902x *encoder_to_sil902x(struct drm_encoder *encoder)
 {
@@ -96,7 +89,6 @@ static void sil902x_reset(struct sil902x *sil902x)
 static void sil902x_encoder_reset(struct drm_encoder *encoder)
 {
 	struct sil902x *sil902x = encoder_to_sil902x(encoder);
-
 	sil902x_reset(sil902x);
 }
 
@@ -474,6 +466,12 @@ static int sil902x_i2c_probe(struct i2c_client *client,
 
 	i2c_set_clientdata(client, sil902x);
 
+#ifdef CONFIG_SND_SOC_SIL9022
+	ret = sii9022_hdmi_codec_register(&client->dev);
+	if (ret)
+		dev_err(&client->dev, "Failed to register audio codec, no audio support!\n");
+#endif
+
 	return component_add(&client->dev, &sil902x_ops);
 }
 
@@ -481,6 +479,9 @@ static int sil902x_i2c_probe(struct i2c_client *client,
 static int sil902x_i2c_remove(struct i2c_client *client)
 
 {
+#ifdef CONFIG_SND_SOC_SIL9022
+	sii9022_hdmi_codec_unregister(&client->dev);
+#endif
 	component_del(&client->dev, &sil902x_ops);
 
 	return 0;

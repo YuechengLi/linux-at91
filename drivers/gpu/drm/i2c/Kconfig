@@ -26,6 +26,10 @@ config DRM_I2C_SIL902X
 	  Support for sil902x and similar single-link (or dual-link
 	  when used in pairs) TMDS transmitters.
 
+config SND_SOC_SIL9022
+	tristate "Enable Audio support on Sii902x"
+	depends on DRM_I2C_SIL902X && SND_SOC
+
 config DRM_I2C_NXP_TDA998X
 	tristate "NXP Semiconductors TDA998X HDMI encoder"
 	default m if DRM_TILCDC
