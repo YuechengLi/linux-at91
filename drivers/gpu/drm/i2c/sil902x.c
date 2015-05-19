@@ -151,15 +151,26 @@ static void sil902x_encoder_commit(struct drm_encoder *encoder)
 	sil902x_encoder_dpms(encoder, DRM_MODE_DPMS_ON);
 }
 
+#include <drm/drm_edid.h>
+#define SII9022_AVI_INFOFRAME_LEN	14
 static void sil902x_encoder_mode_set(struct drm_encoder *encoder,
 				     struct drm_display_mode *mode,
 				     struct drm_display_mode *adjusted_mode)
 {
 	struct sil902x *sil902x = encoder_to_sil902x(encoder);
 	struct regmap * regmap = sil902x->regmap;
-	u8 buf[10];
+	u8 buf[HDMI_INFOFRAME_HEADER_SIZE + HDMI_AVI_INFOFRAME_SIZE];
 	int ret;
+	struct hdmi_avi_infoframe frame;
 
+	ret = drm_hdmi_avi_infoframe_from_display_mode(&frame,
+						       adjusted_mode);
+	if (ret < 0) {
+		DRM_ERROR("couldn't fill AVI infoframe\n");
+		return false;
+	}
+
+#if 0
 	buf[0] = adjusted_mode->clock;
 	buf[1] = adjusted_mode->clock >> 8;
 	buf[2] = 0x3c;
@@ -172,10 +183,22 @@ static void sil902x_encoder_mode_set(struct drm_encoder *encoder,
 		 SIL902X_TPI_AVI_PIXEL_REP_BUS_24BIT;
 	buf[9] = SIL902X_TPI_AVI_INPUT_RANGE_AUTO |
 		 SIL902X_TPI_AVI_INPUT_COLORSPACE_RGB;
+#endif
 
+	ret = hdmi_avi_infoframe_pack(&frame, buf, sizeof(buf));
+	if (ret < 0) {
+		DRM_ERROR("failed to pack AVI infoframe: %zd\n", ret );
+		return;
+	}
+
+	regmap_bulk_write(regmap, SII9022_AVI_INFOFRAME_BASE_REG,
+			  &buf[3], SII9022_AVI_INFOFRAME_LEN);
+
+#if 0
 	ret = regmap_bulk_write(regmap, SIL902X_TPI_VIDEO_DATA, buf, 10);
 	if (ret)
 		return;
+#endif
 }
 
 static const struct drm_encoder_helper_funcs sil902x_encoder_helper_funcs = {

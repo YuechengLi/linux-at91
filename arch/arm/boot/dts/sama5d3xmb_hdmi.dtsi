@@ -19,6 +19,12 @@
 					pinctrl-names = "default";
 					pinctrl-0 = <&pinctrl_sil9022_irq>;
 
+					i2s-fifo-routing =
+							<(0x80 | 0x0)
+							 0
+							 0
+							 0>;
+
 					port {
 						#address-cells = <1>;
 						#size-cells = <0>;
